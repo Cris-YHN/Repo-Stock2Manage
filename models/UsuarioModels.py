@@ -1,4 +1,5 @@
 import sqlite3
+import tkinter as tk
 from entities.UsuarioEntity import Usuario
 
 DB_PATH = "database/s2m.db"
@@ -22,3 +23,67 @@ class UsuarioModel:
         if row:
             return Usuario(*row)
         return None
+    
+    @staticmethod
+    def obtener_todos():
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM usuarios")
+        rows = cursor.fetchall()
+        conn.close()
+        return [Usuario(*row) for row in rows]
+
+    @staticmethod
+    def obtener_solicitudes():
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM usuarios WHERE activo = 0")
+        rows = cursor.fetchall()
+        conn.close()
+        return [Usuario(*row) for row in rows]
+    
+    @staticmethod
+    def obtener_busqueda_por_id(id):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM usuarios WHERE id_usuario = ?", (id,))
+        rows = cursor.fetchall()
+        conn.close()
+        return [Usuario(*row) for row in rows]
+
+    @staticmethod
+    def cambiar_estado_usuario(id_usuario, activo):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE usuarios SET activo = ? WHERE id_usuario = ?", (activo, id_usuario))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def actualizar_usuario(id_usuario, nombre, apellido, puesto):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE usuarios 
+            SET nombre = ?, apellido = ?, puesto = ?
+            WHERE id_usuario = ?
+        """, (nombre, apellido, puesto, id_usuario))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def eliminar_usuario(id_usuario):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM usuarios WHERE id_usuario = ?", (id_usuario,))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def obtener_inactivos():
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM usuarios WHERE activo = 2")
+        rows = cursor.fetchall()
+        conn.close()
+        return [Usuario(*row) for row in rows]

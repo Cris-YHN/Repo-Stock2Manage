@@ -29,6 +29,7 @@ def ventana_login():
         usuario = login_usuario(user_id, password)
         if usuario:
             messagebox.showinfo("Bienvenido", f"Hola {usuario.nombre} {usuario.apellido}")
+            winlog.destroy
             if usuario.puesto == "admin":
                 abrir_menu_admin(usuario)
             elif usuario.puesto == "operario":

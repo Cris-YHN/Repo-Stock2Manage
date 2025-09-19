@@ -1,6 +1,6 @@
 import tkinter as tk
 
-def abrir_menu_supervisor(self, usuario):
+def abrir_menu_supervisor(usuario):
     win = tk.Toplevel()
     win.title("Menú Supervisor")
     tk.Label(win, text=f"Bienvenido {usuario.nombre} (Supervisor)").pack(pady=20)
