@@ -7,18 +7,18 @@ from controllers.UsuarioControllers import (
 )
 
 def abrir_menu_admin(usuario):
-    win = tk.Tk()
-    win.title("Menú Administrador")
-    win.geometry("800x500")
-    win.configure(bg="#004643")
+    menuadm = tk.Tk()
+    menuadm.title("Menú Administrador")
+    menuadm.geometry("800x500")
+    menuadm.configure(bg="#004643")
 
-    tk.Label(win, text=f"Bienvenido {usuario.nombre} (Admin)", bg="#f9bc60", font=("Arial", 16)).pack(pady=20)
+    tk.Label(menuadm, text=f"Bienvenido {usuario.nombre} (Admin)", bg="#f9bc60", font=("Arial", 16)).pack(pady=20)
 
     # Botón para abrir gestión de usuarios
-    tk.Button(win, text="Gestionar Usuarios", command=lambda: gestion_usuarios(win)).pack(pady=5)
-    tk.Button(win, text="Cerrar Sesión", command=win.destroy).pack(pady=5)
+    tk.Button(menuadm, text="Gestionar Usuarios", command=lambda: gestion_usuarios(menuadm)).pack(pady=5)
+    tk.Button(menuadm, text="Cerrar Sesión", command=menuadm.destroy).pack(pady=5)
 
-    win.mainloop()
+    menuadm.mainloop()
 
 def gestion_usuarios(parent):
     pop = tk.Toplevel(parent)
@@ -77,33 +77,33 @@ def gestion_usuarios(parent):
         datos = get_sel()
         if not datos: return
 
-        win = tk.Toplevel(pop)
-        win.title("Modificar Usuario")
+        mini = tk.Toplevel(pop)
+        mini.title("Modificar Usuario")
 
-        tk.Label(win, text="Nombre").pack()
-        entry_nombre = tk.Entry(win); entry_nombre.insert(0, datos[1]); entry_nombre.pack()
+        tk.Label(mini, text="Nombre").pack()
+        entry_nombre = tk.Entry(mini); entry_nombre.insert(0, datos[1]); entry_nombre.pack()
 
-        tk.Label(win, text="Apellido").pack()
-        entry_apellido = tk.Entry(win); entry_apellido.insert(0, datos[2]); entry_apellido.pack()
+        tk.Label(mini, text="Apellido").pack()
+        entry_apellido = tk.Entry(mini); entry_apellido.insert(0, datos[2]); entry_apellido.pack()
 
-        tk.Label(win, text="Puesto").pack()
-        combo_puesto = ttk.Combobox(win, values=["admin", "operario", "supervisor"], state="readonly")
+        tk.Label(mini, text="Puesto").pack()
+        combo_puesto = ttk.Combobox(mini, values=["admin", "operario", "supervisor"], state="readonly")
         combo_puesto.set(datos[3]); combo_puesto.pack()
 
         def guardarMod():
             modificar_usuario(datos[0], entry_nombre.get(), entry_apellido.get(), combo_puesto.get())
             messagebox.showinfo("Éxito", "Usuario actualizado")
-            win.destroy()
+            mini.destroy()
             cargar_todos()
 
-        tk.Button(win, text="Guardar", command=guardarMod).pack(pady=10)
+        tk.Button(mini, text="Guardar", command=guardarMod).pack(pady=10)
     
     def buscarID():
-        win = tk.Toplevel(pop)
-        win.title("Buscar ID")
+        mini = tk.Toplevel(pop)
+        mini.title("Buscar ID")
 
-        tk.Label(win, text="ID Usuario").pack()
-        entry_id = tk.Entry(win) 
+        tk.Label(mini, text="ID Usuario").pack()
+        entry_id = tk.Entry(mini) 
         entry_id.pack() 
 
         def guardarID():
@@ -112,7 +112,7 @@ def gestion_usuarios(parent):
             for u in buscar_id(iduser):
                 dgv.insert("", tk.END, values=(u.id_usuario, u.nombre, u.apellido, u.puesto, u.activo))
         
-        tk.Button(win, text="Buscar", command=guardarID).pack(pady=10)
+        tk.Button(mini, text="Buscar", command=guardarID).pack(pady=10)
 
     def cargar_inactivos():
         dgv.delete(*dgv.get_children())  

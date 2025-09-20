@@ -1,5 +1,4 @@
 import sqlite3
-import tkinter as tk
 from entities.UsuarioEntity import Usuario
 
 DB_PATH = "database/s2m.db"
