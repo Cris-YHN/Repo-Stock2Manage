@@ -1,19 +1,11 @@
 # views/Stock_view.py
 import tkinter as tk
 from tkinter import ttk, messagebox
-from controllers.MaterialControllers import (
-    crear_material,
-    listar_materiales,
-    listar_materiales_inactivos,
-    listar_materiales_escasos,
-    buscar_material,
-    actualizar_material,
-    cambiar_estado_material,
-    cargar_remito
-)
+from controllers.MaterialControllers import listar_materiales, crear_material, modificar_material, alta_material,baja_material,crear_remito,listar_materiales_escasos,listar_materiales_inactivos,buscar_id
 
-def gestion_stock(root):
-    Wstock = tk.Toplevel(root)
+
+def gestion_stock():
+    Wstock = tk.Toplevel()
     Wstock.title("Gestión de Stock")
     Wstock.geometry("800x500")
 
@@ -45,9 +37,16 @@ def gestion_stock(root):
         refrescar(listar_materiales_escasos())
 
     def buscar():
+        mini = tk.Toplevel()
+        mini.title("Buscar ID")
+
+        tk.Label(mini, text="ID Material").pack()
+        entry_id = tk.Entry(mini) 
+        entry_id.pack()
+        
         try:
-            id_mat = int(entry_buscar.get())
-            material = buscar_material(id_mat)
+            id_mat = int(entry_id.get())
+            material = buscar_id(id_mat)
             if material:
                 refrescar([material])
             else:
@@ -96,7 +95,7 @@ def gestion_stock(root):
 
         def guardar():
             try:
-                actualizar_material(int(datos[0]),
+                modificar_material(int(datos[0]),
                                     entry_nombre.get(),
                                     int(entry_stock.get()),
                                     int(entry_prov.get()))
@@ -113,7 +112,7 @@ def gestion_stock(root):
             messagebox.showerror("Error", "Seleccione un material")
             return
         datos = dgv.item(selected[0], "values")
-        cambiar_estado_material(int(datos[0]), 0)
+        baja_material(int(datos[0]))
         mostrar_activos()
 
     def alta():
@@ -122,7 +121,7 @@ def gestion_stock(root):
             messagebox.showerror("Error", "Seleccione un material")
             return
         datos = dgv.item(selected[0], "values")
-        cambiar_estado_material(int(datos[0]), 1)
+        alta_material(int(datos[0]))
         mostrar_activos()
 
     def cargar_remito_view():
@@ -153,7 +152,7 @@ def gestion_stock(root):
                 for entry_id, entry_stock in materiales:
                     id_mat = int(entry_id.get())
                     cant = int(entry_stock.get())
-                    cargar_remito(id_mat, cant)
+                    crear_remito(id_mat, cant)
                 mostrar_activos()
                 messagebox.showinfo("Éxito", "Remito cargado correctamente")
                 mini.destroy()
