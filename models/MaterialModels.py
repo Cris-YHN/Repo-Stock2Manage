@@ -22,12 +22,10 @@ class MaterialModel:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT m.id_material, m.nombre, m.stock_disponible,
-                   m.id_proveedor, p.nombre, m.max_ingreso, m.activo
-            FROM materiales m
-            LEFT JOIN proveedores p ON m.id_proveedor = p.id_proveedor
-            WHERE m.activo = 1
-        """)
+        SELECT m.id_material, m.nombre, m.stock_disponible, m.id_proveedor, p.nombre_proveedor, m.max_ingreso, m.activo
+        FROM materiales m
+        LEFT JOIN proveedores p ON m.id_proveedor = p.id_proveedor
+        WHERE m.activo = 1""")
         rows = cursor.fetchall()
         conn.close()
         return [Material(*row) for row in rows]
@@ -37,8 +35,7 @@ class MaterialModel:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT m.id_material, m.nombre, m.stock_disponible,
-                   m.id_proveedor, p.nombre, m.max_ingreso, m.activo
+            SELECT m.id_material, m.nombre, m.stock_disponible, m.id_proveedor, p.nombre_proveedor, m.max_ingreso, m.activo
             FROM materiales m
             LEFT JOIN proveedores p ON m.id_proveedor = p.id_proveedor
             WHERE m.activo = 0
@@ -52,8 +49,7 @@ class MaterialModel:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT m.id_material, m.nombre, m.stock_disponible,
-                   m.id_proveedor, p.nombre, m.max_ingreso, m.activo
+            SELECT m.id_material, m.nombre, m.stock_disponible, m.id_proveedor, p.nombre_proveedor, m.max_ingreso, m.activo
             FROM materiales m
             LEFT JOIN proveedores p ON m.id_proveedor = p.id_proveedor
             WHERE m.stock_disponible < (m.max_ingreso * 0.5)
@@ -68,8 +64,7 @@ class MaterialModel:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT m.id_material, m.nombre, m.stock_disponible,
-                   m.id_proveedor, p.nombre, m.max_ingreso, m.activo
+            SELECT m.id_material, m.nombre, m.stock_disponible, m.id_proveedor, p.nombre_proveedor, m.max_ingreso, m.activo
             FROM materiales m
             LEFT JOIN proveedores p ON m.id_proveedor = p.id_proveedor
             WHERE m.id_material = ?

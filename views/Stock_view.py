@@ -1,8 +1,10 @@
 # views/Stock_view.py
 import tkinter as tk
 from tkinter import ttk, messagebox
-from controllers.MaterialControllers import listar_materiales, crear_material, modificar_material, alta_material,baja_material,crear_remito,listar_materiales_escasos,listar_materiales_inactivos,buscar_id
-
+from controllers.MaterialControllers import listar_materiales, crear_material, modificar_material, alta_material,baja_material,Carga_Materiales_delRemito,listar_materiales_escasos,listar_materiales_inactivos,buscar_id
+from controllers.RemitosControllers import crear_remito
+from entities.RemitosEntity import RemitoDetalle
+import datetime
 
 def gestion_stock():
     Wstock = tk.Toplevel()
@@ -36,25 +38,41 @@ def gestion_stock():
     def mostrar_escasos():
         refrescar(listar_materiales_escasos())
 
-    def buscar():
+    def buscarID():
         mini = tk.Toplevel()
         mini.title("Buscar ID")
 
         tk.Label(mini, text="ID Material").pack()
         entry_id = tk.Entry(mini) 
-        entry_id.pack()
-        
-        try:
-            id_mat = int(entry_id.get())
-            material = buscar_id(id_mat)
-            if material:
-                refrescar([material])
-            else:
-                messagebox.showinfo("Buscar", "No se encontró el material")
-        except ValueError:
-            messagebox.showerror("Error", "ID inválido")
+        entry_id.pack() 
 
-    def agregar_material():
+        def guardarID():
+            try:
+                idmat = int(entry_id.get().strip())
+                dgv.delete(*dgv.get_children())
+                material = buscar_id(idmat)
+
+                if material:
+                    dgv.insert("", tk.END, values=(
+                    material.id_material, 
+                    material.nombre, 
+                    material.stock_disponible,
+                    material.id_proveedor, 
+                    material.nombre_proveedor,
+                    material.max_ingreso, 
+                    material.activo
+                    ))
+                else:
+                    messagebox.showinfo("Buscar", f"No existe un material con ID {idmat}")
+
+            except ValueError:
+                messagebox.showerror("Error", "El ID debe ser un número")
+            except Exception as e:
+                messagebox.showerror("Error", f"Ocurrió un problema: {e}")
+
+        tk.Button(mini, text="Buscar", command=guardarID).pack(pady=10)
+
+    def agregar():
         mini = tk.Toplevel(Wstock)
         mini.title("Nuevo Material")
 
@@ -69,12 +87,14 @@ def gestion_stock():
                 crear_material(entry_nombre.get(), int(entry_prov.get()))
                 mostrar_activos()
                 mini.destroy()
+            except ValueError:
+                messagebox.showerror("Error", "El ID debe ser un número")
             except Exception as e:
                 messagebox.showerror("Error", str(e))
 
         tk.Button(mini, text="Guardar", command=guardar).pack(pady=10)
 
-    def modificar_material():
+    def modificar():
         selected = dgv.selection()
         if not selected:
             messagebox.showerror("Error", "Seleccione un material")
@@ -101,6 +121,8 @@ def gestion_stock():
                                     int(entry_prov.get()))
                 mostrar_activos()
                 mini.destroy()
+            except ValueError:
+                messagebox.showerror("Error", "El ID debe ser un número")
             except Exception as e:
                 messagebox.showerror("Error", str(e))
 
@@ -130,6 +152,10 @@ def gestion_stock():
 
         materiales = []
 
+        tk.Label(mini, text="Proveedor").pack()
+        entry_prov = tk.Entry(mini)
+        entry_prov.pack(pady=5)
+        
         frame = tk.Frame(mini)
         frame.pack(pady=10)
 
@@ -149,10 +175,17 @@ def gestion_stock():
 
         def guardar():
             try:
+                id_proveedor = int(entry_prov.get())
+                fecha = datetime.date.today().strftime("%Y-%m-%d")
+                detalles = []
+
                 for entry_id, entry_stock in materiales:
                     id_mat = int(entry_id.get())
                     cant = int(entry_stock.get())
-                    crear_remito(id_mat, cant)
+                    detalles.append(RemitoDetalle(id_material=id_mat, cantidad=cant))
+                    Carga_Materiales_delRemito(id_mat, cant)
+
+                crear_remito(fecha, id_proveedor, detalles)
                 mostrar_activos()
                 messagebox.showinfo("Éxito", "Remito cargado correctamente")
                 mini.destroy()
@@ -162,21 +195,17 @@ def gestion_stock():
         tk.Button(mini, text="Agregar Material", command=agregar).pack(pady=5)
         tk.Button(mini, text="Guardar Remito", command=guardar).pack(pady=5)
 
-    # --- Barra de botones ---
+    # Los distintos Botones
     barra = tk.Frame(Wstock); barra.pack(pady=5)
 
     tk.Button(barra, text="Activos", command=mostrar_activos).grid(row=0, column=0, padx=5)
     tk.Button(barra, text="Inactivos", command=mostrar_inactivos).grid(row=0, column=1, padx=5)
-    tk.Button(barra, text="Escasos", command=mostrar_escasos).grid(row=0, column=2, padx=5)
-    tk.Button(barra, text="Agregar", command=agregar_material).grid(row=0, column=3, padx=5)
-    tk.Button(barra, text="Modificar", command=modificar_material).grid(row=0, column=4, padx=5)
-    tk.Button(barra, text="Baja", command=baja).grid(row=0, column=5, padx=5)
-    tk.Button(barra, text="Alta", command=alta).grid(row=0, column=6, padx=5)
-    tk.Button(barra, text="Remito", command=cargar_remito_view).grid(row=0, column=7, padx=5)
-
-    # --- Buscar ---
-    tk.Label(Wstock, text="Buscar por ID").pack()
-    entry_buscar = tk.Entry(Wstock); entry_buscar.pack()
-    tk.Button(Wstock, text="Buscar", command=buscar).pack(pady=5)
-
+    tk.Button(barra, text="Buscar por ID", command=buscarID).grid(row=0, column=2, padx=5)
+    tk.Button(barra, text="Escasos", command=mostrar_escasos).grid(row=0, column=3, padx=5)
+    tk.Button(barra, text="Agregar", command=agregar).grid(row=0, column=4, padx=5)
+    tk.Button(barra, text="Modificar", command=modificar).grid(row=0, column=5, padx=5)
+    tk.Button(barra, text="Baja", command=baja).grid(row=0, column=6, padx=5)
+    tk.Button(barra, text="Alta", command=alta).grid(row=0, column=7, padx=5)
+    tk.Button(barra, text="Remito", command=cargar_remito_view).grid(row=0, column=8, padx=5)
+    
     mostrar_activos()

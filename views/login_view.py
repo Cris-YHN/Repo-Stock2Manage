@@ -7,13 +7,13 @@ from views.Menu_Supervisor_view import abrir_menu_supervisor
 
 
 def ventana_login():
-    # """Ventana principal de inicio de sesión"""
+    # creacion de ventana de login
     winlog = tk.Tk()
     winlog.geometry("700x500")
     winlog.configure(bg="#004643")
     winlog.title("Inicio de sesión")
 
-    # --- Widgets de ingreso de datos ---
+    # Distintos Widgets de la ventana
     tk.Label(winlog, text="ID Usuario").pack(pady=(20, 5))
     entry_id = tk.Entry(winlog)
     entry_id.pack(pady=5)
@@ -22,30 +22,36 @@ def ventana_login():
     entry_pass = tk.Entry(winlog, show="*")
     entry_pass.pack(pady=5)
 
-    # --- Funciones internas ---
+    # Fuciones internas
     def login():
-        user_id = entry_id.get().strip()
-        password = entry_pass.get()
-        usuario = login_usuario(user_id, password)
-        if usuario:
-            messagebox.showinfo("Bienvenido", f"Hola {usuario.nombre} {usuario.apellido}")
-            winlog.destroy
-            if usuario.puesto == "admin":
-                abrir_menu_admin(usuario)
-            elif usuario.puesto == "operario":
-                abrir_menu_operario(usuario)
-            elif usuario.puesto == "supervisor":
-                abrir_menu_supervisor(usuario)
-        else:
-            messagebox.showerror("Error", "Credenciales inválidas")
+        try:
+            user_id = int(entry_id.get().strip())
+            password = entry_pass.get()
+            usuario = login_usuario(user_id, password)
+            if usuario:
+                messagebox.showinfo("Bienvenido", f"Hola {usuario.nombre} {usuario.apellido}")
+                winlog.destroy
+                if usuario.puesto == "admin":
+                    abrir_menu_admin(usuario)
+                elif usuario.puesto == "operario":
+                    abrir_menu_operario(usuario)
+                elif usuario.puesto == "supervisor":
+                    abrir_menu_supervisor(usuario)
+            else:
+                messagebox.showerror("Error", "Credenciales inválidas")
+        except ValueError:
+                messagebox.showerror("Error", "El ID debe ser un número")
+        except Exception as e:
+                messagebox.showerror("Error", f"Ocurrió un problema: {e}")
 
     def abrir_registro():
-        # """Ventana de registro de nuevo usuario"""
+        # Ventana de Registro de usuario
         reg = tk.Toplevel(winlog)
         reg.title("Registro de Usuario")
         reg.geometry("350x300")
         reg.configure(bg="#004643")
 
+        #Entrys para el ingreso de datos
         tk.Label(reg, text="Nombre").pack(pady=5)
         entry_nombre = tk.Entry(reg); entry_nombre.pack(pady=5)
 
@@ -61,18 +67,21 @@ def ventana_login():
         combo_puesto.pack(pady=5)
 
         def registrar():
-            nombre = entry_nombre.get().strip()
-            apellido = entry_apellido.get().strip()
-            contr = entry_pass_reg.get()
-            puesto = combo_puesto.get()
-            if nombre and apellido and contr:
-                registrar_usuario(nombre, apellido, contr, puesto)
-                messagebox.showinfo("Éxito", "Usuario registrado correctamente")
-                reg.destroy()
-            else:
-                messagebox.showerror("Error", "Todos los campos son obligatorios")
+            try:
+                nombre = entry_nombre.get().strip()
+                apellido = entry_apellido.get().strip()
+                contr = entry_pass_reg.get()
+                puesto = combo_puesto.get()
+                if nombre and apellido and contr:
+                    registrar_usuario(nombre, apellido, contr, puesto)
+                    messagebox.showinfo("Éxito", "Usuario registrado correctamente")
+                    reg.destroy()
+                else:
+                    messagebox.showerror("Error", "Todos los campos son obligatorios")
+            except Exception as e:
+                messagebox.showerror("Error", f"Ocurrió un problema: {e}")
 
-        tk.Button(reg, text="Registrar", command=registrar).pack(pady=15)
+            tk.Button(reg, text="Registrar", command=registrar).pack(pady=15)
 
     # --- Botones de acción ---
     tk.Button(winlog, text="Ingresar", command=login).pack(pady=(10, 5))

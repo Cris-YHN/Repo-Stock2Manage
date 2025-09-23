@@ -5,7 +5,7 @@ def listar_materiales():
     return MaterialModel.obtener_activos()
 
 def crear_material(nombre, id_proveedor):
-    material = Material(nombre=nombre, id_proveedor=id_proveedor, activo=1)
+    material = Material(nombre=nombre, id_proveedor=id_proveedor)
     MaterialModel.insertar(material)
 
 def modificar_material(id_material, nombre, stock, id_proveedor):
@@ -17,7 +17,7 @@ def alta_material(id_material):
 def baja_material(id_material):
     MaterialModel.cambiar_estado(id_material, 0)
 
-def crear_remito(id_material, cantidad):
+def Carga_Materiales_delRemito(id_material, cantidad):
     MaterialModel.cargar_remito(id_material, cantidad)
 
 def listar_materiales_escasos():

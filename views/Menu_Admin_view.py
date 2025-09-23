@@ -91,10 +91,13 @@ def gestion_usuarios(parent):
         combo_puesto.set(datos[3]); combo_puesto.pack()
 
         def guardarMod():
-            modificar_usuario(datos[0], entry_nombre.get(), entry_apellido.get(), combo_puesto.get())
-            messagebox.showinfo("Éxito", "Usuario actualizado")
-            mini.destroy()
-            cargar_todos()
+            try:
+                modificar_usuario(datos[0], entry_nombre.get(), entry_apellido.get(), combo_puesto.get())
+                messagebox.showinfo("Éxito", "Usuario actualizado")
+                mini.destroy()
+                cargar_todos()
+            except Exception as e:
+                messagebox.showerror("Error", f"Ocurrió un problema: {e}")
 
         tk.Button(mini, text="Guardar", command=guardarMod).pack(pady=10)
     
@@ -107,10 +110,15 @@ def gestion_usuarios(parent):
         entry_id.pack() 
 
         def guardarID():
-            iduser = entry_id.get()
-            dgv.delete(*dgv.get_children())
-            for u in buscar_id(iduser):
-                dgv.insert("", tk.END, values=(u.id_usuario, u.nombre, u.apellido, u.puesto, u.activo))
+            try:
+                iduser = int(entry_id.get())
+                dgv.delete(*dgv.get_children())
+                for u in buscar_id(iduser):
+                    dgv.insert("", tk.END, values=(u.id_usuario, u.nombre, u.apellido, u.puesto, u.activo))
+            except ValueError:
+                messagebox.showerror("Error", "El ID debe ser un número")
+            except Exception as e:
+                messagebox.showerror("Error", f"Ocurrió un problema: {e}")
         
         tk.Button(mini, text="Buscar", command=guardarID).pack(pady=10)
 
