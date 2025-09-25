@@ -160,6 +160,20 @@ def gestion_stock():
         frame.pack(pady=10)
 
         def agregar():
+            # Si ya hay materiales cargados, validar el último antes de permitir uno nuevo
+            if materiales:
+                last_id, last_stock = materiales[-1]
+                if not last_id.get().strip() or not last_stock.get().strip():
+                    messagebox.showerror("Error", "Complete el material anterior antes de agregar otro")
+                    return
+                try:
+                    int(last_id.get())
+                    int(last_stock.get())
+                except ValueError:
+                    messagebox.showerror("Error", "El ID y la cantidad deben ser números")
+                    return
+
+            # Si pasó la validación, agregar un nuevo par de entries
             row = tk.Frame(frame)
             row.pack(pady=5)
 

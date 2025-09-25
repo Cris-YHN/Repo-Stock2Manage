@@ -1,4 +1,5 @@
 import sqlite3
+import bcrypt
 from entities.UsuarioEntity import Usuario
 
 DB_PATH = "database/s2m.db"
@@ -27,7 +28,7 @@ class UsuarioModel:
     def obtener_todos():
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM usuarios")
+        cursor.execute("SELECT * FROM usuarios WHERE activo = 1")
         rows = cursor.fetchall()
         conn.close()
         return [Usuario(*row) for row in rows]
@@ -86,3 +87,15 @@ class UsuarioModel:
         rows = cursor.fetchall()
         conn.close()
         return [Usuario(*row) for row in rows]
+    
+    @staticmethod
+    def hash_password(password: str) -> str:
+        # Genera el hash con salt
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+        return hashed.decode("utf-8")  # se guarda como texto en la DB
+    
+    @staticmethod
+    def check_password(password: str, hashed: str) -> bool:
+        # Verifica la contraseña ingresada contra el hash almacenado
+        return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))

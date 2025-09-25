@@ -29,8 +29,13 @@ def ventana_login():
             password = entry_pass.get()
             usuario = login_usuario(user_id, password)
             if usuario:
+                if usuario.activo == 0:
+                    messagebox.showerror("Acceso denegado", "Tu usuario está inactivo. Contacta al administrador.")
+                    return
+
                 messagebox.showinfo("Bienvenido", f"Hola {usuario.nombre} {usuario.apellido}")
-                winlog.destroy
+                winlog.destroy()
+
                 if usuario.puesto == "admin":
                     abrir_menu_admin(usuario)
                 elif usuario.puesto == "operario":
@@ -81,7 +86,7 @@ def ventana_login():
             except Exception as e:
                 messagebox.showerror("Error", f"Ocurrió un problema: {e}")
 
-            tk.Button(reg, text="Registrar", command=registrar).pack(pady=15)
+        tk.Button(reg, text="Registrar", command=registrar).pack(pady=15)
 
     # --- Botones de acción ---
     tk.Button(winlog, text="Ingresar", command=login).pack(pady=(10, 5))

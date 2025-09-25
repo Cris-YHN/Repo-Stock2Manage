@@ -5,7 +5,7 @@ from controllers.ProveedorControllers import listar_proveedores, Buscar_proveedo
 
 def gestion_proveedores():
     Wprov = tk.Toplevel()
-    Wprov.title("")
+    Wprov.title("Gestion Proveedores")
     Wprov.geometry("800x500")
     Wprov.configure(bg="#004643")
 
@@ -117,10 +117,34 @@ def gestion_proveedores():
         mini.title("Ver Codigos Postales")
         mini.geometry("800x500")
 
-        dgvmini = ttk.Treeview(mini, columns=("Codigo", "Ciudad", "Provincia", "Pais"), show="headings")
+        # Frame contenedor para treeview + scrollbar
+        frame_tabla = tk.Frame(mini)
+        frame_tabla.pack(fill=tk.BOTH, expand=True)
+
+        # Scrollbar vertical
+        scrollbar_y = tk.Scrollbar(frame_tabla, orient="vertical")
+        scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Scrollbar horizontal
+        scrollbar_x = tk.Scrollbar(frame_tabla, orient="horizontal")
+        scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X)
+
+        # Treeview con scroll
+        dgvmini = ttk.Treeview(
+            frame_tabla,
+            columns=("Codigo", "Ciudad", "Provincia", "Pais"),
+            show="headings",
+            yscrollcommand=scrollbar_y.set,
+            xscrollcommand=scrollbar_x.set)
         for col in ("Codigo", "Ciudad", "Provincia", "Pais"):
             dgvmini.heading(col, text=col)
+            dgvmini.column(col, width=150)  # ancho fijo para que se vea ordenado
+
         dgvmini.pack(fill=tk.BOTH, expand=True)
+
+        # Configurar scrollbars
+        scrollbar_y.config(command=dgvmini.yview)
+        scrollbar_x.config(command=dgvmini.xview)
 
         def cargar_todos():
             dgvmini.delete(*dgvmini.get_children())  #Borra datos que estaban en el treeview

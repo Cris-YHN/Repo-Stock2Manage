@@ -5,7 +5,7 @@ from controllers.RemitosControllers import listar_remitos, Buscar_remito_por_id,
 
 def Gestion_Remitos():
     Wrem = tk.Toplevel()
-    Wrem.title("")
+    Wrem.title("Gestion Remitos")
     Wrem.geometry("800x500")
     Wrem.configure(bg="#004643")
 
