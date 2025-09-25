@@ -71,8 +71,9 @@ class RemitoModel:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id_remito, id_material, cantidad
-            FROM remito_detalles
+            SELECT rd.id_remito, rd.id_material, m.nombre, rd.cantidad
+            FROM remito_detalles rd
+            LEFT JOIN materiales m ON rd.id_material = m.id_material
             WHERE id_remito = ?
         """, (id_remito,))
         rows = cursor.fetchall()

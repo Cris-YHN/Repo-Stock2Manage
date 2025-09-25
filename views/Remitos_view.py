@@ -2,6 +2,11 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from controllers.RemitosControllers import listar_remitos, Buscar_remito_por_id, modificar_proveedor, listar_detalles_por_remito
 
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+import os
 
 def Gestion_Remitos():
     Wrem = tk.Toplevel()
@@ -90,22 +95,38 @@ def Gestion_Remitos():
             id_remito = int(datos[0])
         except Exception as e:
                 messagebox.showerror("Error", f"Ocurrió un problema: {e}")
+                return
+
+        detalles = listar_detalles_por_remito(id_remito)
+        if not detalles:
+            messagebox.showinfo("Sin datos", f"No hay detalles para el remito {id_remito}")
+            return
         
-        mini = tk.Toplevel()
-        mini.title(f"Detalle Remito #{id_remito}")
-        mini.geometry("800x500")
+        # Generar PDF
+        nombre_archivo = f"remito_{id_remito}.pdf"
+        doc = SimpleDocTemplate(nombre_archivo, pagesize=A4)
+        elements = []
+        styles = getSampleStyleSheet()
 
-        dgvmini = ttk.Treeview(mini, columns=("ID Remito", "ID Material", "Cantidad"), show="headings")
-        for col in ("ID Remito", "ID Material", "Cantidad"):
-            dgvmini.heading(col, text=col)
-        dgvmini.pack(fill=tk.BOTH, expand=True)
+        elements.append(Paragraph(f"Detalle Remito #{id_remito}", styles["Title"]))
+        elements.append(Spacer(1, 12))
 
-        def cargar_todos():
-            dgvmini.delete(*dgvmini.get_children())
-            for d in listar_detalles_por_remito(id_remito):
-                dgvmini.insert("", tk.END, values=(d.id_remito, d.id_material, d.cantidad))
+        data = [["ID Remito","ID Material","Nombre Material", "Cantidad"]]
+        for rd in detalles:
+            data.append([rd.id_remito, rd.id_material, rd.nombre_material, rd.cantidad])
 
-        cargar_todos()
+        tabla = Table(data)
+        tabla.setStyle(TableStyle([
+            ("BACKGROUND", (0,0), (-1,0), colors.lightblue),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.black),
+            ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
+            ("ALIGN", (0,0), (-1,-1), "CENTER")
+        ]))
+
+        elements.append(tabla)
+        doc.build(elements)
+
+        messagebox.showinfo("PDF generado", f"Se creó el archivo {os.path.abspath(nombre_archivo)}")
 
     def get_sel():
         sel = dgv.focus()
@@ -113,7 +134,6 @@ def Gestion_Remitos():
             messagebox.showwarning("Atención", "Seleccioná un usuario")
             return None
         return dgv.item(sel)["values"]
-
 
     # Frame de los botones
     frame_btns = tk.Frame(Wrem, bg="#004643")

@@ -7,7 +7,8 @@ class Remito:
         self.detalles = detalles if detalles is not None else []  # lista de objetos RemitoDetalle
 
 class RemitoDetalle:
-    def __init__(self, id_remito=None, id_material=None, cantidad=None):
+    def __init__(self, id_remito=None, id_material=None, nombre_material="", cantidad=None):
         self.id_remito = id_remito
         self.id_material = id_material
+        self.nombre_material = nombre_material
         self.cantidad = cantidad

@@ -117,7 +117,7 @@ def gestion_proveedores():
         mini.title("Ver Codigos Postales")
         mini.geometry("800x500")
 
-        # Frame contenedor para treeview + scrollbar
+        # Frame contenedor de treeview y scrollbar
         frame_tabla = tk.Frame(mini)
         frame_tabla.pack(fill=tk.BOTH, expand=True)
 
@@ -129,7 +129,6 @@ def gestion_proveedores():
         scrollbar_x = tk.Scrollbar(frame_tabla, orient="horizontal")
         scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X)
 
-        # Treeview con scroll
         dgvmini = ttk.Treeview(
             frame_tabla,
             columns=("Codigo", "Ciudad", "Provincia", "Pais"),
