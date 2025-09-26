@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from controllers.MaterialControllers import listar_materiales, crear_material, modificar_material, alta_material,baja_material,Carga_Materiales_delRemito,listar_materiales_escasos,listar_materiales_inactivos,buscar_id
 from controllers.RemitosControllers import crear_remito
+from controllers.ProveedorControllers import listar_proveedores
 from entities.RemitosEntity import RemitoDetalle
 import datetime
 
@@ -72,7 +73,7 @@ def gestion_stock():
 
         tk.Button(mini, text="Buscar", command=guardarID).pack(pady=10)
 
-    def agregar():
+    def agregar_mat():
         mini = tk.Toplevel(Wstock)
         mini.title("Nuevo Material")
 
@@ -84,13 +85,33 @@ def gestion_stock():
 
         def guardar():
             try:
-                crear_material(entry_nombre.get(), int(entry_prov.get()))
-                mostrar_activos()
-                mini.destroy()
+                nombre = entry_nombre.get().strip()
+                id_prov = int(entry_prov.get().strip())
             except ValueError:
                 messagebox.showerror("Error", "El ID debe ser un número")
             except Exception as e:
                 messagebox.showerror("Error", str(e))
+
+            if not nombre or not id_prov:
+                messagebox.showerror("Error", "Todos los campos son obligatorios")
+                return
+
+            # Verificar que exista el proveedor
+            proveedores = listar_proveedores()
+            if not any(p.id_proveedor == id_prov for p in proveedores):
+                messagebox.showerror("Error", f"No existe un proveedor con ID {id_prov}")
+                return
+            
+            respuesta = messagebox.askyesno(
+                "Confirmación",
+                "¿Está seguro de que desea agregar este material?"
+            )
+            if not respuesta:
+                return
+            
+            crear_material(nombre, id_prov)
+            mostrar_activos()
+            mini.destroy()
 
         tk.Button(mini, text="Guardar", command=guardar).pack(pady=10)
 
@@ -115,10 +136,28 @@ def gestion_stock():
 
         def guardar():
             try:
-                modificar_material(int(datos[0]),
-                                    entry_nombre.get(),
-                                    int(entry_stock.get()),
-                                    int(entry_prov.get()))
+                nombre = entry_nombre.get()
+                stock = int(entry_stock.get())
+                id_prov = int(entry_prov.get())
+                idmat = int(datos[0])
+            except ValueError:
+                messagebox.showerror("Error", "El ID debe ser un número")
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+            
+            if not nombre or not stock or not id_prov:
+                messagebox.showerror("Error", "Todos los campos son obligatorios")
+                return
+
+            respuesta = messagebox.askyesno(
+                "Confirmación",
+                "¿Está seguro de que desea realizar estos cambios?"
+            )
+            if not respuesta:
+                return
+
+            try:
+                modificar_material(idmat,nombre, stock, id_prov)
                 mostrar_activos()
                 mini.destroy()
             except ValueError:
@@ -134,6 +173,14 @@ def gestion_stock():
             messagebox.showerror("Error", "Seleccione un material")
             return
         datos = dgv.item(selected[0], "values")
+
+        respuesta = messagebox.askyesno(
+            "Confirmación",
+            "¿Está seguro de que desea realizar estos cambios?"
+            )
+        if not respuesta:
+            return
+        
         baja_material(int(datos[0]))
         mostrar_activos()
 
@@ -143,6 +190,14 @@ def gestion_stock():
             messagebox.showerror("Error", "Seleccione un material")
             return
         datos = dgv.item(selected[0], "values")
+
+        respuesta = messagebox.askyesno(
+            "Confirmación",
+            "¿Está seguro de que desea realizar estos cambios?"
+            )
+        if not respuesta:
+            return
+
         alta_material(int(datos[0]))
         mostrar_activos()
 
@@ -158,6 +213,10 @@ def gestion_stock():
         
         frame = tk.Frame(mini)
         frame.pack(pady=10)
+
+        def eliminar_fila(row, entry_pair):
+            materiales.remove(entry_pair)
+            row.destroy()
 
         def agregar():
             # Si ya hay materiales cargados, validar el último antes de permitir uno nuevo
@@ -185,11 +244,19 @@ def gestion_stock():
             entry_stock = tk.Entry(row, width=10)
             entry_stock.grid(row=0, column=3, padx=5)
 
+            btn_borrar = tk.Button(row, text="❌", fg="red", command=lambda r=row, e=(entry_id, entry_stock): eliminar_fila(r, e))
+            btn_borrar.grid(row=0, column=4, padx=5)
+
             materiales.append((entry_id, entry_stock))
 
         def guardar():
             try:
                 id_proveedor = int(entry_prov.get())
+                proveedores = listar_proveedores()
+                if not any(p.id_proveedor == id_proveedor for p in proveedores):
+                    messagebox.showerror("Error", f"No existe un proveedor con ID {id_proveedor}")
+                    return
+                
                 fecha = datetime.date.today().strftime("%Y-%m-%d")
                 detalles = []
 
@@ -198,6 +265,13 @@ def gestion_stock():
                     cant = int(entry_stock.get())
                     detalles.append(RemitoDetalle(id_material=id_mat, cantidad=cant))
                     Carga_Materiales_delRemito(id_mat, cant)
+
+                respuesta = messagebox.askyesno(
+                    "Confirmación",
+                    "¿Está seguro de que desea realizar estos cambios?"
+                    )
+                if not respuesta:
+                    return
 
                 crear_remito(fecha, id_proveedor, detalles)
                 mostrar_activos()
@@ -216,7 +290,7 @@ def gestion_stock():
     tk.Button(barra, text="Inactivos", command=mostrar_inactivos).grid(row=0, column=1, padx=5)
     tk.Button(barra, text="Buscar por ID", command=buscarID).grid(row=0, column=2, padx=5)
     tk.Button(barra, text="Escasos", command=mostrar_escasos).grid(row=0, column=3, padx=5)
-    tk.Button(barra, text="Agregar", command=agregar).grid(row=0, column=4, padx=5)
+    tk.Button(barra, text="Agregar", command=agregar_mat).grid(row=0, column=4, padx=5)
     tk.Button(barra, text="Modificar", command=modificar).grid(row=0, column=5, padx=5)
     tk.Button(barra, text="Baja", command=baja).grid(row=0, column=6, padx=5)
     tk.Button(barra, text="Alta", command=alta).grid(row=0, column=7, padx=5)

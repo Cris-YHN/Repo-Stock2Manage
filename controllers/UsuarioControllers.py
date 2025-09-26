@@ -37,8 +37,8 @@ def alta_usuario(id_usuario):
 def modificar_usuario(id_usuario, nombre, apellido, puesto):
     UsuarioModel.actualizar_usuario(id_usuario, nombre, apellido, puesto)
 
-def buscar_id(id_usuario):
-    return UsuarioModel.obtener_busqueda_por_id(id_usuario)
+def buscar_por_apellido(apellido: str):
+    return UsuarioModel.buscar_por_apellido(apellido)
 
 def listar_inactivos():
     return UsuarioModel.obtener_inactivos()

@@ -99,3 +99,16 @@ class UsuarioModel:
     def check_password(password: str, hashed: str) -> bool:
         # Verifica la contraseña ingresada contra el hash almacenado
         return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
+    
+    @staticmethod
+    def buscar_por_apellido(apellido: str):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id_usuario, nombre, apellido, contrasenia, puesto, activo
+            FROM usuarios
+            WHERE apellido LIKE ?
+        """, (f"%{apellido}%",))
+        rows = cursor.fetchall()
+        conn.close()
+        return [Usuario(*row) for row in rows]
