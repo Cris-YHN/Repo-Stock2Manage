@@ -61,7 +61,7 @@ def gestion_proveedores(parent_frame):
         ctk.CTkLabel(mini, text="ID Proveedor").pack(pady=5)
         e = ctk.CTkEntry(mini); e.pack(pady=5)
 
-        def go():
+        def buscar():
             try:
                 pid = int(e.get())
                 dgv.delete(*dgv.get_children())
@@ -73,7 +73,7 @@ def gestion_proveedores(parent_frame):
                 mini.destroy()
             except Exception as ex:
                 messagebox.showerror("Error", str(ex))
-        ctk.CTkButton(mini, text="Buscar", fg_color=COLOR_BTN, command=go).pack(pady=10)
+        ctk.CTkButton(mini, text="Buscar", fg_color=COLOR_BTN, command=buscar).pack(pady=10)
 
     def agregar_prov():
         mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
@@ -128,7 +128,7 @@ def gestion_proveedores(parent_frame):
 
         # Frame contenedor del Treeview y Scrollbars
         frame_tabla = ctk.CTkFrame(mini)
-        frame_tabla.pack(fill="both", expand=True, padx=10, pady=10)
+        frame_tabla.pack(fill="both", expand=True, padx=10, pady=(10,0))
 
         # Scrollbars
         scrollbar_y = ctk.CTkScrollbar(frame_tabla, orientation="vertical")
@@ -152,8 +152,8 @@ def gestion_proveedores(parent_frame):
 
         dmini.pack(fill="both", expand=True)
 
-        scrollbar_y.config(command=dmini.yview)
-        scrollbar_x.config(command=dmini.xview)
+        scrollbar_y.configure(command=dmini.yview)
+        scrollbar_x.configure(command=dmini.xview)
 
         def cargar_all():
             dmini.delete(*dmini.get_children())
@@ -168,14 +168,14 @@ def gestion_proveedores(parent_frame):
             entry = ctk.CTkEntry(win)
             entry.pack(pady=5)
 
-            def go():
+            def buscar():
                 dmini.delete(*dmini.get_children())
                 for cp in Buscar_proveedor_por_nombre(entry.get()):
                     dmini.insert("", "end",
                                 values=(cp.codigo_postal, cp.ciudad, cp.provincia, cp.pais))
                 win.destroy()
 
-            ctk.CTkButton(win, text="Buscar", fg_color=COLOR_BTN, command=go).pack(pady=10)
+            ctk.CTkButton(win, text="Buscar", fg_color=COLOR_BTN, command=buscar).pack(pady=10)
 
         # Barra inferior con botones
         fb = ctk.CTkFrame(mini, fg_color=COLOR_FRAME)

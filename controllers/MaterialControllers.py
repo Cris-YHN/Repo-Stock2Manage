@@ -29,3 +29,8 @@ def listar_materiales_inactivos():
 def buscar_id(id_material):
     return MaterialModel.obtener_por_id(id_material)
 
+def verificar_existencia(idmat):
+    return MaterialModel.material_existe(idmat)
+
+def uso_material(cantidad, idmat):
+    MaterialModel.descontar_material(cantidad, idmat)

@@ -25,10 +25,11 @@ def set_button_state(btn, enabled: bool):
         btn.configure(state="disabled", fg_color=COLOR_BTN_OFF, text_color=COLOR_BTN_TXT_OFF)
 
 def abrir_menu_admin(usuario):
-    menuadm = ctk.CTk()
+    menuadm = ctk.CTkToplevel()
     menuadm.geometry("1100x600")
     menuadm.title("Panel Administrador")
     menuadm.configure(fg_color=COLOR_BG)
+    menuadm.iconbitmap("assets/images/icono.ico")
 
     # Panel superior (verde)
     top_panel = ctk.CTkFrame(menuadm, fg_color=COLOR_TOP, height=60)
@@ -56,7 +57,7 @@ def abrir_menu_admin(usuario):
     # inicio con logo centrado
     logo = ctk.CTkImage(light_image=Image.open("assets/images/logo.png"), size=(220,220))
     logo_label = ctk.CTkLabel(contenedor, image=logo, text="")
-    logo_label.pack(expand=True)          # ocupa el centro al inicio
+    logo_label.pack(expand=True)
 
     # Funcionalidad de gestion de usuario
     frame_gestion = None

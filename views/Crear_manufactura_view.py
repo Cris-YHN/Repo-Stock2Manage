@@ -1,0 +1,276 @@
+import customtkinter as ctk
+from tkinter import ttk, messagebox
+from controllers.ManufacturaControllers import (crear_manufactura, listar_manufactura, listar_pasos, Buscar_manufactura_por_nombre, modificar_manufactura, crear_paso,modificar_paso)
+from controllers.MaterialControllers import (verificar_existencia)
+
+#Colores
+COLOR_BG = "#16161a"
+COLOR_FRAME = "#242629"
+COLOR_TOP = "#2cb67d"
+COLOR_BTN = "#7f5af0"
+
+def gestion_crear_manufactura(parent_frame):
+    for w in parent_frame.winfo_children():
+        w.destroy()
+    
+    main = ctk.CTkFrame(parent_frame, fg_color=COLOR_BG)
+    main.pack(fill="both", expand=True)
+
+    # Treeview
+    style = ttk.Style()
+    style.theme_use("default")
+    style.configure("Treeview",
+                    background=COLOR_BG,
+                    foreground="white",
+                    fieldbackground=COLOR_BG,
+                    rowheight=28)
+    style.map("Treeview",
+              background=[("selected", COLOR_TOP)],
+              foreground=[("selected", "white")])
+
+    # creacion del frame del tree
+    frame_tree = ctk.CTkFrame(main, fg_color=COLOR_FRAME)
+    frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
+
+    # Setear columnas
+    dgv = ttk.Treeview(frame_tree, columns=("ID", "Nombre"), show="headings")
+    for c in ("ID", "Nombre"):
+        dgv.heading(c, text=c)
+        dgv.column(c, anchor="center", width=200)
+    dgv.pack(fill="both", expand=True, padx=5, pady=5)
+
+    def cargar_todos():
+        dgv.delete(*dgv.get_children())
+        for r in listar_manufactura():
+            dgv.insert("", "end", values=(r.id_manufactura, r.nombre))
+    
+    def get_sel():
+        sel = dgv.focus()
+        if not sel:
+            messagebox.showwarning("Atención", "Seleccione una Manufactura")
+            return None
+        return dgv.item(sel)["values"]
+
+    def agregar_manufactura():
+        mini = ctk.CTkToplevel(main)
+        mini.title("Nueva Manufactura")
+        mini.transient(main)
+        mini.grab_set()
+
+        ctk.CTkLabel(mini, text="Nombre:").pack(pady=5)
+        entry_nombre = ctk.CTkEntry(mini)
+        entry_nombre.pack(pady=5)
+
+        def guardar():
+            nombre = entry_nombre.get().strip()
+            if not nombre:
+                messagebox.showerror("Error", "Debe ingresar un nombre")
+                return
+            crear_manufactura(nombre)
+            cargar_todos()
+            mini.destroy()
+
+        ctk.CTkButton(mini, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
+    
+    def buscarXNombre():
+        mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
+        mini.title("Buscar Manufactura")
+        ctk.CTkLabel(mini, text="Nombre Manufactura").pack(pady=5)
+        entry_nombre = ctk.CTkEntry(mini); entry_nombre.pack(pady=5)
+
+        def go():
+            try:
+                mfnom = entry_nombre.get()
+                dgv.delete(*dgv.get_children())
+                resultados = Buscar_manufactura_por_nombre(mfnom)
+                if resultados:
+                    for mf in resultados:
+                        dgv.insert("", "end", values=(mf.id_manufactura, mf.nombre))
+                else:
+                    messagebox.showinfo("Buscar", f"No existe Manufactura {mfnom}")
+                mini.destroy()
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+            
+        ctk.CTkButton(mini, text="Buscar", fg_color=COLOR_BTN, command=go).pack(pady=10)
+
+    
+    def modificar():
+        datos = get_sel()
+        if not datos: return
+        mini = ctk.CTkToplevel(main)
+        mini.title("Modificar Manufactura"); mini.transient(main); mini.grab_set()
+
+        ctk.CTkLabel(mini, text="Nombre").pack(pady=5)
+        entry_nom = ctk.CTkEntry(mini); entry_nom.insert(0, datos[1]); entry_nom.pack(pady=5)
+
+        def guardar():
+            try:
+                modificar_manufactura(int(datos[0]), entry_nom.get())
+                cargar_todos(); mini.destroy()
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+        ctk.CTkButton(mini, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
+    
+    def ver_pasos():
+        datos = get_sel()
+        if not datos:
+            return
+        id_manuf = datos[0]
+
+        mini = ctk.CTkToplevel(main)
+        mini.title(f"Pasos - Manufactura {id_manuf}")
+        mini.geometry("500x400")
+        mini.transient(main)
+        mini.grab_set()
+
+        frame_pasos = ctk.CTkFrame(mini, fg_color=COLOR_FRAME)
+        frame_pasos.pack(fill="both", expand=True, padx=10, pady=10)
+
+        columnas_p = ("Paso", "ID Material", "Nombre Material", "Cantidad Necesaria")
+        tree_pasos = ttk.Treeview(frame_pasos, columns=columnas_p, show="headings")
+        for c in columnas_p:
+            tree_pasos.heading(c, text=c)
+            tree_pasos.column(c, anchor="center", width=120)
+        tree_pasos.pack(fill="both", expand=True, padx=5, pady=5)
+
+        def cargar_pasos():
+            tree_pasos.delete(*tree_pasos.get_children())
+            for p in listar_pasos(id_manuf):
+                tree_pasos.insert("", "end",
+                                values=(p.id_paso, p.id_material, p.nombre, p.cantidad_necesaria))
+
+        # -------- Botones dentro de la ventana de pasos --------
+        btn_frame = ctk.CTkFrame(mini, fg_color=COLOR_FRAME)
+        btn_frame.pack(fill="x", pady=5)
+
+        def agregar_paso_view():
+            win = ctk.CTkToplevel(mini)
+            win.title("Agregar Paso")
+            win.transient(mini)
+            win.grab_set()
+
+            rows = []  # guarda (entry_id, entry_qty)
+
+            frame_rows = ctk.CTkFrame(win)
+            frame_rows.pack(pady=10)
+
+            def add_row():
+                # si ya hay filas, exigir que la última no esté vacía
+                if rows:
+                    e_id_last, e_qty_last = rows[-1]
+                    if not e_id_last.get().strip() or not e_qty_last.get().strip():
+                        messagebox.showwarning("Atención",
+                                            "Complete el material anterior antes de agregar otro.")
+                        return
+
+                row = ctk.CTkFrame(frame_rows)
+                row.pack(pady=5)
+
+                e_id = ctk.CTkEntry(row, width=80, placeholder_text="ID Material")
+                e_id.grid(row=0, column=0, padx=5)
+                e_qty = ctk.CTkEntry(row, width=80, placeholder_text="Cantidad")
+                e_qty.grid(row=0, column=1, padx=5)
+
+                # botón para eliminar la fila
+                def remove_row():
+                    rows.remove((e_id, e_qty))
+                    row.destroy()
+
+                ctk.CTkButton(row, text="❌", width=25, fg_color="#ff4d4d",
+                            command=remove_row).grid(row=0, column=2, padx=5)
+
+                rows.append((e_id, e_qty))
+
+            def guardar_pasos():
+                try:
+                    # validar que la última fila no esté vacía
+                    if rows and (not rows[-1][0].get().strip() or not rows[-1][1].get().strip()):
+                        messagebox.showwarning("Atención",
+                                            "Complete todos los campos antes de guardar.")
+                        return
+
+                    # determinar el próximo número de paso una sola vez
+                    pasos_existentes = listar_pasos(id_manuf)
+                    nuevo_paso = max([p.id_paso for p in pasos_existentes], default=0) + 1
+
+                    for e_id, e_qty in rows:
+                        id_material = int(e_id.get())
+                        cantidad = int(e_qty.get())
+                        if not verificar_existencia(id_material):
+                            messagebox.showerror("Error", f"El material {id_material} no existe.")
+                            return
+
+                        # todos los materiales de esta carga comparten el mismo paso
+                        crear_paso(id_manuf, nuevo_paso, id_material, cantidad)
+
+
+                    cargar_pasos()
+                    win.destroy()
+                except ValueError:
+                    messagebox.showerror("Error", "Ingrese valores numéricos válidos.")
+
+            # Botones en la ventana de agregar
+            ctk.CTkButton(win, text="Agregar Material", fg_color=COLOR_BTN,
+                        command=add_row).pack(pady=5)
+            ctk.CTkButton(win, text="Guardar", fg_color=COLOR_BTN,
+                        command=guardar_pasos).pack(pady=5)
+
+            # Comienza con una fila inicial
+            add_row()
+
+        def modificar_paso_view():
+            sel = tree_pasos.focus()
+            if not sel:
+                messagebox.showwarning("Atención", "Seleccione un paso para modificar")
+                return
+            valores = tree_pasos.item(sel)["values"]
+            paso_nro, mat_actual, cant_actual = valores[:3]
+
+            win = ctk.CTkToplevel(mini)
+            win.title(f"Modificar Paso {paso_nro}")
+            win.transient(mini)
+            win.grab_set()
+
+            ctk.CTkLabel(win, text="ID Material:").pack(pady=5)
+            entry_mat = ctk.CTkEntry(win)
+            entry_mat.insert(0, mat_actual)
+            entry_mat.pack(pady=5)
+
+            ctk.CTkLabel(win, text="Cantidad Necesaria:").pack(pady=5)
+            entry_cant = ctk.CTkEntry(win)
+            entry_cant.insert(0, cant_actual)
+            entry_cant.pack(pady=5)
+
+            def guardar_modificacion():
+                try:
+                    id_material = int(entry_mat.get())
+                    cantidad = int(entry_cant.get())
+                    modificar_paso(id_manuf, paso_nro, id_material, cantidad)
+                    cargar_pasos()
+                    win.destroy()
+                except ValueError:
+                    messagebox.showerror("Error", "Datos inválidos")
+
+            ctk.CTkButton(win, text="Guardar Cambios", fg_color=COLOR_BTN,
+                        command=guardar_modificacion).pack(pady=10)
+
+        cargar_pasos()
+
+        ctk.CTkButton(btn_frame, text="Agregar Paso", fg_color=COLOR_BTN,
+                    command=agregar_paso_view).pack(side="left", padx=10, pady=10)
+        ctk.CTkButton(btn_frame, text="Modificar Paso", fg_color=COLOR_BTN,
+                    command=modificar_paso_view).pack(side="left", padx=10, pady=10)
+
+
+
+    # barra de botones
+    fb = ctk.CTkFrame(main, fg_color=COLOR_FRAME)
+    fb.pack(fill="x", pady=5)
+    ctk.CTkButton(fb, text="Ver Manufacturas", fg_color=COLOR_BTN, command=cargar_todos).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Agregar Manufacturas", fg_color=COLOR_BTN, command=agregar_manufactura).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Buscar Nombre", fg_color=COLOR_BTN, command=buscarXNombre).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Modificar Manufactura", fg_color=COLOR_BTN, command=modificar).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Ver Pasos", fg_color=COLOR_BTN, command=ver_pasos).pack(side="left", padx=10, pady=10)
+
+    cargar_todos()

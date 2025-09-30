@@ -110,3 +110,36 @@ class MaterialModel:
         """, (cantidad, cantidad, cantidad, id_material))
         conn.commit()
         conn.close()
+    
+    @staticmethod
+    def material_existe(id_material):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM materiales WHERE id_material = ?", (id_material,))
+        found = cursor.fetchone() is not None
+        conn.close()
+        return found
+    
+    @staticmethod
+    def descontar_material(cantidad, id_material):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        # Verificar stock disponible
+        cursor.execute("SELECT stock_disponible FROM materiales WHERE id_material = ?", (id_material,))
+        row = cursor.fetchone()
+        if not row:
+            conn.close()
+            raise ValueError("El material no existe.")
+        if row[0] < cantidad:
+            conn.close()
+            raise ValueError("Stock insuficiente para realizar el proceso.")
+
+        # Descontar stock
+        cursor.execute("""
+            UPDATE materiales
+            SET stock_disponible = stock_disponible - ?
+            WHERE id_material = ?
+        """, (cantidad, id_material))
+        conn.commit()
+        conn.close()

@@ -2,10 +2,9 @@ import customtkinter as ctk
 from PIL import Image
 from tkinter import messagebox
 from controllers.UsuarioControllers import registrar_usuario, login_usuario
-from views.Menu_admin_view import abrir_menu_admin
+from views.Menu_Admin_view import abrir_menu_admin
 from views.Menu_Operario_view import abrir_menu_operario
 from views.Menu_Supervisor_view import abrir_menu_supervisor
-from views.menusup import abrir_menu_supervisore
 
 # Configuración de tema
 ctk.set_appearance_mode("dark")  # Modo oscuro
@@ -54,7 +53,6 @@ def ventana_login():
                     return
 
                 messagebox.showinfo("Bienvenido", f"Hola {usuario.nombre} {usuario.apellido}")
-                winlog.destroy()
 
                 if usuario.puesto == "admin":
                     abrir_menu_admin(usuario)
