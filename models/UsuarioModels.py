@@ -28,10 +28,20 @@ class UsuarioModel:
     def obtener_todos():
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
+        cursor.execute("SELECT * FROM usuarios")
+        rows = cursor.fetchall()
+        conn.close()
+        return [Usuario(*row) for row in rows]
+    
+    @staticmethod
+    def obtener_activos():
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
         cursor.execute("SELECT * FROM usuarios WHERE activo = 1")
         rows = cursor.fetchall()
         conn.close()
         return [Usuario(*row) for row in rows]
+
 
     @staticmethod
     def obtener_solicitudes():

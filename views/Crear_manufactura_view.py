@@ -56,9 +56,13 @@ def gestion_crear_manufactura(parent_frame):
         mini.title("Nueva Manufactura")
         mini.transient(main)
         mini.grab_set()
+        mini.geometry("250x200")
 
-        ctk.CTkLabel(mini, text="Nombre:").pack(pady=5)
-        entry_nombre = ctk.CTkEntry(mini)
+        frame_center = ctk.CTkFrame(mini, fg_color="transparent")
+        frame_center.pack(expand=True)
+
+        ctk.CTkLabel(frame_center, text="Nombre:").pack(pady=5)
+        entry_nombre = ctk.CTkEntry(frame_center)
         entry_nombre.pack(pady=5)
 
         def guardar():
@@ -70,13 +74,18 @@ def gestion_crear_manufactura(parent_frame):
             cargar_todos()
             mini.destroy()
 
-        ctk.CTkButton(mini, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
     
     def buscarXNombre():
         mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
         mini.title("Buscar Manufactura")
-        ctk.CTkLabel(mini, text="Nombre Manufactura").pack(pady=5)
-        entry_nombre = ctk.CTkEntry(mini); entry_nombre.pack(pady=5)
+        mini.geometry("250x200")
+
+        frame_center = ctk.CTkFrame(mini, fg_color="transparent")
+        frame_center.pack(expand=True)
+
+        ctk.CTkLabel(frame_center, text="Nombre Manufactura").pack(pady=5)
+        entry_nombre = ctk.CTkEntry(frame_center); entry_nombre.pack(pady=5)
 
         def go():
             try:
@@ -92,7 +101,7 @@ def gestion_crear_manufactura(parent_frame):
             except Exception as e:
                 messagebox.showerror("Error", str(e))
             
-        ctk.CTkButton(mini, text="Buscar", fg_color=COLOR_BTN, command=go).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Buscar", fg_color=COLOR_BTN, command=go).pack(pady=10)
 
     
     def modificar():
@@ -100,9 +109,13 @@ def gestion_crear_manufactura(parent_frame):
         if not datos: return
         mini = ctk.CTkToplevel(main)
         mini.title("Modificar Manufactura"); mini.transient(main); mini.grab_set()
+        mini.geometry("250x200")
 
-        ctk.CTkLabel(mini, text="Nombre").pack(pady=5)
-        entry_nom = ctk.CTkEntry(mini); entry_nom.insert(0, datos[1]); entry_nom.pack(pady=5)
+        frame_center = ctk.CTkFrame(mini, fg_color="transparent")
+        frame_center.pack(expand=True)
+
+        ctk.CTkLabel(frame_center, text="Nombre").pack(pady=5)
+        entry_nom = ctk.CTkEntry(frame_center); entry_nom.insert(0, datos[1]); entry_nom.pack(pady=5)
 
         def guardar():
             try:
@@ -110,7 +123,7 @@ def gestion_crear_manufactura(parent_frame):
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-        ctk.CTkButton(mini, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
     
     def ver_pasos():
         datos = get_sel()
@@ -120,7 +133,7 @@ def gestion_crear_manufactura(parent_frame):
 
         mini = ctk.CTkToplevel(main)
         mini.title(f"Pasos - Manufactura {id_manuf}")
-        mini.geometry("500x400")
+        mini.geometry("600x500")
         mini.transient(main)
         mini.grab_set()
 
@@ -149,6 +162,7 @@ def gestion_crear_manufactura(parent_frame):
             win.title("Agregar Paso")
             win.transient(mini)
             win.grab_set()
+            win.geometry("400x350")
 
             rows = []  # guarda (entry_id, entry_qty)
 
@@ -225,20 +239,25 @@ def gestion_crear_manufactura(parent_frame):
                 messagebox.showwarning("Atención", "Seleccione un paso para modificar")
                 return
             valores = tree_pasos.item(sel)["values"]
-            paso_nro, mat_actual, cant_actual = valores[:3]
+            paso_nro, mat_actual, nombre_material, cant_actual = valores
+            mat_original = mat_actual
 
             win = ctk.CTkToplevel(mini)
             win.title(f"Modificar Paso {paso_nro}")
             win.transient(mini)
             win.grab_set()
+            win.geometry("400x350")
 
-            ctk.CTkLabel(win, text="ID Material:").pack(pady=5)
-            entry_mat = ctk.CTkEntry(win)
+            frame_center = ctk.CTkFrame(win, fg_color="transparent")
+            frame_center.pack(expand=True)
+
+            ctk.CTkLabel(frame_center, text="ID Material:").pack(pady=5)
+            entry_mat = ctk.CTkEntry(frame_center)
             entry_mat.insert(0, mat_actual)
             entry_mat.pack(pady=5)
 
-            ctk.CTkLabel(win, text="Cantidad Necesaria:").pack(pady=5)
-            entry_cant = ctk.CTkEntry(win)
+            ctk.CTkLabel(frame_center, text="Cantidad Necesaria:").pack(pady=5)
+            entry_cant = ctk.CTkEntry(frame_center)
             entry_cant.insert(0, cant_actual)
             entry_cant.pack(pady=5)
 
@@ -246,13 +265,13 @@ def gestion_crear_manufactura(parent_frame):
                 try:
                     id_material = int(entry_mat.get())
                     cantidad = int(entry_cant.get())
-                    modificar_paso(id_manuf, paso_nro, id_material, cantidad)
+                    modificar_paso(id_manuf, paso_nro, mat_original, int(entry_mat.get()), int(entry_cant.get()))
                     cargar_pasos()
                     win.destroy()
                 except ValueError:
                     messagebox.showerror("Error", "Datos inválidos")
 
-            ctk.CTkButton(win, text="Guardar Cambios", fg_color=COLOR_BTN,
+            ctk.CTkButton(frame_center, text="Guardar Cambios", fg_color=COLOR_BTN,
                         command=guardar_modificacion).pack(pady=10)
 
         cargar_pasos()

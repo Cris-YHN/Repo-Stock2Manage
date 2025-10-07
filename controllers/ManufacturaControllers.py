@@ -26,11 +26,12 @@ def crear_paso(id_manufactura: int, id_paso: int, id_material: int, cantidad_nec
     )
     return ManufacturaModel.insertar_paso(detalle)
 
-def modificar_paso(id_manufactura: int, id_paso: int, id_material: int, cantidad_necesaria: int):
+def modificar_paso(id_manufactura: int, id_paso: int, mat_original: int,
+                   nuevo_material: int, cantidad_necesaria: int):
     detalle = ManufacturaDetalle(
         id_manufactura=id_manufactura,
         id_paso=id_paso,
-        id_material=id_material,
+        id_material=nuevo_material,
         cantidad_necesaria=cantidad_necesaria
     )
-    return ManufacturaModel.modificar_paso(detalle)
+    return ManufacturaModel.modificar_paso(detalle, mat_original)

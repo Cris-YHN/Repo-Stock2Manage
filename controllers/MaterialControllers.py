@@ -2,6 +2,9 @@ from models.MaterialModels import MaterialModel
 from entities.MaterialEntity import Material
 
 def listar_materiales():
+    return MaterialModel.obtener_materiales()
+
+def listar_materiales_activos():
     return MaterialModel.obtener_activos()
 
 def crear_material(nombre, id_proveedor):
@@ -26,8 +29,8 @@ def listar_materiales_escasos():
 def listar_materiales_inactivos():
     return MaterialModel.obtener_inactivos()
 
-def buscar_id(id_material):
-    return MaterialModel.obtener_por_id(id_material)
+def buscar_nombre(namemat):
+    return MaterialModel.obtener_por_nombre(namemat)
 
 def verificar_existencia(idmat):
     return MaterialModel.material_existe(idmat)

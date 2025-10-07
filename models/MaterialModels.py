@@ -18,6 +18,18 @@ class MaterialModel:
         conn.close()
 
     @staticmethod
+    def obtener_materiales():
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT m.id_material, m.nombre, m.stock_disponible, m.id_proveedor, p.nombre_proveedor, m.max_ingreso, m.activo
+        FROM materiales m
+        LEFT JOIN proveedores p ON m.id_proveedor = p.id_proveedor""")
+        rows = cursor.fetchall()
+        conn.close()
+        return [Material(*row) for row in rows]
+    
+    @staticmethod
     def obtener_activos():
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
@@ -60,19 +72,19 @@ class MaterialModel:
         return [Material(*row) for row in rows]
 
     @staticmethod
-    def obtener_por_id(id_material):
+    def obtener_por_nombre(nombre):
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
             SELECT m.id_material, m.nombre, m.stock_disponible, m.id_proveedor, p.nombre_proveedor, m.max_ingreso, m.activo
             FROM materiales m
             LEFT JOIN proveedores p ON m.id_proveedor = p.id_proveedor
-            WHERE m.id_material = ?
-        """, (id_material,))
-        row = cursor.fetchone()
+            WHERE m.nombre LIKE ?
+        """, (f"%{nombre}%",))
+        rows = cursor.fetchall()
         conn.close()
-        if row:
-            return Material(*row)
+        if rows:
+            return [Material(*row) for row in rows]
         return None
 
     @staticmethod

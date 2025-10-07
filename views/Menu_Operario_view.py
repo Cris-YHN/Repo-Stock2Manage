@@ -1,36 +1,68 @@
 import customtkinter as ctk
-from tkinter import ttk, messagebox
+from tkinter import messagebox
 from PIL import Image
-from assets.images.resources import logo_img
+from assets.Themes import themes
 from controllers.ManufacturaControllers import listar_pasos
 from controllers.MaterialControllers import uso_material
 
-# Colores
-ctk.set_appearance_mode("dark")
-COLOR_BG       = "#16161a"
-COLOR_TOP      = "#2cb67d"
-COLOR_FRAME    = "#242629"
-COLOR_BTN      = "#7f5af0"
-COLOR_BTN_OFF  = "#3a3a3a"
-COLOR_BTN_TXT  = "#ffffff"
-COLOR_BTN_TXT_OFF = "#777777"
-
-# Funcion de utilidad para botones
-def set_button_state(btn, enabled: bool):
-    if enabled:
-        btn.configure(state="normal", fg_color=COLOR_BTN, text_color=COLOR_BTN_TXT)
-    else:
-        btn.configure(state="disabled", fg_color=COLOR_BTN_OFF, text_color=COLOR_BTN_TXT_OFF)
-
-def abrir_menu_operario(usuario):
+def abrir_menu_operario(usuario, winlog):
+    colors = themes.get_colors()
     menuope = ctk.CTkToplevel()
     menuope.geometry("1100x600")
     menuope.title("Panel Operario")
-    menuope.configure(fg_color=COLOR_BG)
+    menuope.configure(fg_color=colors["BG"])
     menuope.iconbitmap("assets/images/icono.ico")
 
+    def apply_theme():
+        c = themes.get_colors()
+
+        # Fondos principales
+        menuope.configure(fg_color=c["BG"])
+        top_panel.configure(fg_color=c["TOP"])
+        menu_lateral.configure(fg_color=c["FRAME"])
+        contenedor.configure(fg_color=c["BG"])
+
+        # Labels fijos
+        lbl_titulo.configure(text_color=c["BUTTON_TXT"])
+        lbl_usuario.configure(text_color=c["BUTTON_TXT"])
+
+        # Menú lateral
+        for widget in menu_lateral.winfo_children():
+            if isinstance(widget, ctk.CTkLabel):
+                widget.configure(text_color=c["TEXT"])
+            elif isinstance(widget, ctk.CTkButton):
+                if widget.cget("text") == "Cerrar Sesión":
+                    widget.configure(fg_color="#ff4d4d", text_color="white")
+                else:
+                    widget.configure(fg_color=c["BUTTON"], text_color=c["BUTTON_TXT"])
+
+        # 🔥 Nuevo: recorrer todo el contenedor (frames, labels, buttons, etc.)
+        def update_widgets(parent):
+            for widget in parent.winfo_children():
+                # Actualiza fondo de frames
+                if isinstance(widget, ctk.CTkFrame):
+                    widget.configure(fg_color=c["BG"])
+                    update_widgets(widget)   # 👈 recursivo para hijos del frame
+                # Actualiza labels
+                elif isinstance(widget, ctk.CTkLabel):
+                    widget.configure(text_color=c["TEXT"])
+                # Actualiza botones
+                elif isinstance(widget, ctk.CTkButton):
+                    widget.configure(fg_color=c["BUTTON"], text_color=c["BUTTON_TXT"])
+                # Entradas y combobox
+                elif isinstance(widget, ctk.CTkEntry) or isinstance(widget, ctk.CTkComboBox):
+                    widget.configure(fg_color=c["FRAME"], text_color=c["TEXT"])
+
+        update_widgets(contenedor)
+
+    def toggle():
+        themes.toggle_theme()
+        ctk.set_appearance_mode(themes.current_mode)  # 🔥 sincroniza con CustomTkinter
+        apply_theme()
+        btn_tema.configure(text="☀️ Modo Claro" if themes.current_mode == "dark" else "🌙 Modo Oscuro")
+
     # Panel superior (verde)
-    top_panel = ctk.CTkFrame(menuope, fg_color=COLOR_TOP, height=60)
+    top_panel = ctk.CTkFrame(menuope, fg_color=colors["TOP"], height=60)
     top_panel.pack(fill="x")
 
     lbl_titulo = ctk.CTkLabel(top_panel, text="Panel Operario",
@@ -42,14 +74,14 @@ def abrir_menu_operario(usuario):
     lbl_usuario.pack(side="right", padx=20)
 
     # Menú lateral (botones)
-    menu_lateral = ctk.CTkFrame(menuope, fg_color=COLOR_FRAME, width=200)
+    menu_lateral = ctk.CTkFrame(menuope, fg_color=colors["FRAME"], width=200)
     menu_lateral.pack(side="left", fill="y")
 
-    ctk.CTkLabel(menu_lateral, text="Menú", text_color="white",
+    ctk.CTkLabel(menu_lateral, text="Menú", text_color=colors["TEXT"],
                  font=("Arial",16,"bold")).pack(pady=15)
     
     # contenedor principal
-    contenedor = ctk.CTkFrame(menuope, fg_color=COLOR_BG)
+    contenedor = ctk.CTkFrame(menuope, fg_color=colors["BG"])
     contenedor.pack(side="right", fill="both", expand=True)
 
     # inicio con logo centrado
@@ -68,23 +100,26 @@ def abrir_menu_operario(usuario):
         logo_lbl = ctk.CTkLabel(contenedor, image=logo, text="")
         logo_lbl.pack(expand=True)
 
+    def cerrar_sesion():
+        menuope.destroy()        # cierra el menú
+        winlog.deiconify()       # vuelve a mostrar el login
 
     def gestion_procesar_manufactura():
         limpiar_contenedor()
 
-        frame = ctk.CTkFrame(contenedor, fg_color=COLOR_BG)
+        frame = ctk.CTkFrame(contenedor, fg_color=colors["BG"])
         frame.pack(fill="both", expand=True, padx=20, pady=20)
 
         ctk.CTkLabel(frame, text="Procesar Manufactura",
-                    font=("Arial",18,"bold"), text_color="white").pack(pady=10)
+                    font=("Arial",18,"bold"), text_color=colors["TEXT"]).pack(pady=10)
 
         # ID manufactura
-        ctk.CTkLabel(frame, text="ID Manufactura:", text_color="white").pack(pady=5)
+        ctk.CTkLabel(frame, text="ID Manufactura:", text_color=colors["TEXT"]).pack(pady=5)
         entry_idmanu = ctk.CTkEntry(frame, width=150)
         entry_idmanu.pack(pady=5)
 
         # Combobox para los pasos
-        ctk.CTkLabel(frame, text="Seleccione el Paso:", text_color="white").pack(pady=5)
+        ctk.CTkLabel(frame, text="Seleccione el Paso:", text_color=colors["TEXT"]).pack(pady=5)
         combo_pasos = ctk.CTkComboBox(frame, values=[], width=300)
         combo_pasos.pack(pady=5)
 
@@ -110,7 +145,7 @@ def abrir_menu_operario(usuario):
             combo_pasos.configure(values=opciones)
             combo_pasos.set(opciones[0])
 
-        ctk.CTkButton(frame, text="Cargar Pasos", fg_color=COLOR_BTN, command=cargar_pasos).pack(pady=10)
+        ctk.CTkButton(frame, text="Cargar Pasos", fg_color=colors["BUTTON"], command=cargar_pasos).pack(pady=10)
 
         # Botón procesar paso
         def procesar_paso():
@@ -141,22 +176,27 @@ def abrir_menu_operario(usuario):
             messagebox.showinfo("Procesado", f"Se procesó Paso {paso_num} con {len(materiales_del_paso)} materiales.")
 
         ctk.CTkButton(frame, text="Procesar Paso",
-                    fg_color=COLOR_BTN,
+                    fg_color=colors["BUTTON"],
                     command=procesar_paso).pack(pady=10)
     # Botones menú lateral
     btn_inicio = ctk.CTkButton(menu_lateral, text="Inicio",
-                               fg_color=COLOR_BTN, width=180,
+                               fg_color=colors["BUTTON"], width=180,
                                command=mostrar_inicio)
     btn_inicio.pack(pady=5)
     
     btn_gestion = ctk.CTkButton(menu_lateral, text="Gestión de Usuarios",
-                                fg_color=COLOR_BTN, width=180,
+                                fg_color=colors["BUTTON"], width=180,
                                 command=gestion_procesar_manufactura)
     btn_gestion.pack(pady=5)
 
+    btn_tema = ctk.CTkButton(menu_lateral, text="🌙 Modo Oscuro",
+                               fg_color=colors["BUTTON"], width=180,
+                               command=toggle)
+    btn_tema.pack(side="bottom", pady=10)
+
     btn_cerrar = ctk.CTkButton(menu_lateral, text="Cerrar Sesión",
                                fg_color="#ff4d4d", width=180,
-                               command=menuope.destroy)
+                               command=cerrar_sesion)
     btn_cerrar.pack(side="bottom", pady=10)
 
-    menuope.mainloop()
+    mostrar_inicio()

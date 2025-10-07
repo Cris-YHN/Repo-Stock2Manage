@@ -61,8 +61,13 @@ def gestion_remitos(parent_frame):
     def buscarID():
         mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
         mini.title("Buscar Remito")
-        ctk.CTkLabel(mini, text="ID Remito").pack(pady=5)
-        entry = ctk.CTkEntry(mini); entry.pack(pady=5)
+        mini.geometry("300x200")
+
+        frame_center = ctk.CTkFrame(mini, fg_color="transparent")
+        frame_center.pack(expand=True)
+
+        ctk.CTkLabel(frame_center, text="ID Remito").pack(pady=5)
+        entry = ctk.CTkEntry(frame_center); entry.pack(pady=5)
 
         def go():
             try:
@@ -76,16 +81,20 @@ def gestion_remitos(parent_frame):
                 mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-        ctk.CTkButton(mini, text="Buscar", fg_color=COLOR_BTN, command=go).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Buscar", fg_color=COLOR_BTN, command=go).pack(pady=10)
 
     def modificar_prov_view():
         datos = get_sel()
         if not datos: return
         mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
         mini.title("Modificar Proveedor")
+        mini.geometry("250x200")
 
-        ctk.CTkLabel(mini, text="ID Proveedor").pack(pady=5)
-        e_prov = ctk.CTkEntry(mini); e_prov.insert(0, datos[2]); e_prov.pack(pady=5)
+        frame_center = ctk.CTkFrame(mini, fg_color="transparent")
+        frame_center.pack(expand=True)
+
+        ctk.CTkLabel(frame_center, text="ID Proveedor").pack(pady=5)
+        e_prov = ctk.CTkEntry(frame_center); e_prov.insert(0, datos[2]); e_prov.pack(pady=5)
 
         def guardar():
             try:
@@ -93,7 +102,7 @@ def gestion_remitos(parent_frame):
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-        ctk.CTkButton(mini, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
 
     def ver_detalles():
         datos = get_sel()

@@ -19,6 +19,9 @@ def login_usuario(id, contrasenia):
 def listar_usuarios():
     return UsuarioModel.obtener_todos()
 
+def listar_activos():
+    return UsuarioModel.obtener_activos()
+
 def listar_solicitudes():
     return UsuarioModel.obtener_solicitudes()
 

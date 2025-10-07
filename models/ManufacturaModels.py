@@ -80,14 +80,20 @@ class ManufacturaModel:
         conn.close()
 
     @staticmethod
-    def modificar_paso(detalle: ManufacturaDetalle):
+    def modificar_paso(detalle: ManufacturaDetalle, mat_original: int):
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
             UPDATE manufactura_detalles
             SET id_material = ?, cantidad_necesaria = ?
-            WHERE id_manufactura = ? AND id_paso = ?
-        """, (detalle.id_material, detalle.cantidad_necesaria, detalle.id_manufactura, detalle.id_paso))
+            WHERE id_manufactura = ? AND id_paso = ? AND id_material = ?
+        """, (
+            detalle.id_material,
+            detalle.cantidad_necesaria,
+            detalle.id_manufactura,
+            detalle.id_paso,
+            mat_original     # 👈 usamos el material original
+        ))
         conn.commit()
         conn.close()
 

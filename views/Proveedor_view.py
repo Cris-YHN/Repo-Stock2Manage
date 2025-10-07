@@ -58,8 +58,13 @@ def gestion_proveedores(parent_frame):
     def buscarID():
         mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
         mini.title("Buscar ID")
-        ctk.CTkLabel(mini, text="ID Proveedor").pack(pady=5)
-        e = ctk.CTkEntry(mini); e.pack(pady=5)
+        mini.geometry("300x200")
+
+        frame_center = ctk.CTkFrame(mini, fg_color="transparent")
+        frame_center.pack(expand=True)
+
+        ctk.CTkLabel(frame_center, text="ID Proveedor").pack(pady=5)
+        e = ctk.CTkEntry(frame_center); e.pack(pady=5)
 
         def buscar():
             try:
@@ -73,15 +78,20 @@ def gestion_proveedores(parent_frame):
                 mini.destroy()
             except Exception as ex:
                 messagebox.showerror("Error", str(ex))
-        ctk.CTkButton(mini, text="Buscar", fg_color=COLOR_BTN, command=buscar).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Buscar", fg_color=COLOR_BTN, command=buscar).pack(pady=10)
 
     def agregar_prov():
         mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
         mini.title("Nuevo Proveedor")
+        mini.geometry("300x400")
+
+        frame_center = ctk.CTkFrame(mini, fg_color="transparent")
+        frame_center.pack(expand=True)
+
         entries = {}
         for campo in ["Nombre","Codigo Postal","Calle","Numero","Telefono"]:
-            ctk.CTkLabel(mini, text=campo).pack()
-            e = ctk.CTkEntry(mini); e.pack(pady=2)
+            ctk.CTkLabel(frame_center, text=campo).pack()
+            e = ctk.CTkEntry(frame_center); e.pack(pady=2)
             entries[campo] = e
         def guardar():
             try:
@@ -91,19 +101,24 @@ def gestion_proveedores(parent_frame):
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-        ctk.CTkButton(mini, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
 
     def modificar_prov_view():
         datos = get_sel()
         if not datos: return
         mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
         mini.title("Modificar Proveedor")
+        mini.geometry("350x450")
+
+        frame_center = ctk.CTkFrame(mini, fg_color="transparent")
+        frame_center.pack(expand=True)
+
         labels = ["Nombre","Codigo Postal","Calle","Numero","Telefono"]
         defaults = [datos[1], datos[2], datos[5], datos[6], datos[7]]
         entries = {}
         for lab,val in zip(labels, defaults):
-            ctk.CTkLabel(mini, text=lab).pack()
-            e = ctk.CTkEntry(mini); e.insert(0, val); e.pack()
+            ctk.CTkLabel(frame_center, text=lab).pack(pady=10)
+            e = ctk.CTkEntry(frame_center); e.insert(0, val); e.pack()
             entries[lab] = e
         def guardar():
             try:
@@ -117,7 +132,7 @@ def gestion_proveedores(parent_frame):
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-        ctk.CTkButton(mini, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=15)
 
     def ver_cp():
         mini = ctk.CTkToplevel(main)
@@ -162,10 +177,15 @@ def gestion_proveedores(parent_frame):
                             values=(cp.codigo_postal, cp.ciudad, cp.provincia, cp.pais))
 
         def buscar_ciudad():
-            win = ctk.CTkToplevel(mini)
+            win = ctk.CTkToplevel(win); win.transient(main); win.grab_set()
             win.title("Buscar Ciudad")
-            ctk.CTkLabel(win, text="Ciudad:").pack(pady=5)
-            entry = ctk.CTkEntry(win)
+            win.geometry("300x200")
+
+            frame_center = ctk.CTkFrame(win, fg_color="transparent")
+            frame_center.pack(expand=True)
+
+            ctk.CTkLabel(frame_center, text="Ciudad:").pack(pady=5)
+            entry = ctk.CTkEntry(frame_center)
             entry.pack(pady=5)
 
             def buscar():
@@ -175,7 +195,7 @@ def gestion_proveedores(parent_frame):
                                 values=(cp.codigo_postal, cp.ciudad, cp.provincia, cp.pais))
                 win.destroy()
 
-            ctk.CTkButton(win, text="Buscar", fg_color=COLOR_BTN, command=buscar).pack(pady=10)
+            ctk.CTkButton(frame_center, text="Buscar", fg_color=COLOR_BTN, command=buscar).pack(pady=10)
 
         # Barra inferior con botones
         fb = ctk.CTkFrame(mini, fg_color=COLOR_FRAME)
