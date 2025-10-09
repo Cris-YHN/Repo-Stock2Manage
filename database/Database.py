@@ -136,6 +136,21 @@ def create_table_manufactura_detalles():
     conn.commit()
     conn.close()
 
+def create_table_logs():
+    conn = sql.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+            CREATE TABLE IF NOT EXISTS logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                usuario TEXT,
+                accion TEXT,
+                nivel TEXT,
+                equipo TEXT,
+                fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+    """)
+    conn.commit()
+    conn.close()
+
 def crear_todas_tablas():
     create_table_usuarios()
     create_table_codigos_postales()
@@ -145,4 +160,5 @@ def crear_todas_tablas():
     create_table_remito_detalles()
     create_table_manufactura()
     create_table_manufactura_detalles()
+    create_table_logs()
 

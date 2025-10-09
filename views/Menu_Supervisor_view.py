@@ -16,7 +16,6 @@ def set_button_state(btn, enabled: bool):
             btn.configure(state="disabled", fg_color=colors["BUTTON_OFF"], text_color=colors["BUTTON_TXT_OFF"])
 
 def abrir_menu_supervisor(usuario, winlog):
-    themes.init_theme()
     colors = themes.get_colors()
     menusup = ctk.CTkToplevel()
     menusup.geometry("1100x600")
@@ -60,6 +59,11 @@ def abrir_menu_supervisor(usuario, winlog):
     def cerrar_sesion():
         menusup.destroy()        # cierra el menú
         winlog.deiconify()       # 🔥 vuelve a mostrar el login
+
+    def Salir_Programa():
+        menusup.destroy()        # cierra el menú
+        winlog.deiconify()       # 🔥 vuelve a mostrar el login
+        winlog.destroy()
     
     def limpiar_contenedor():
         for widget in contenedor.winfo_children():
@@ -106,6 +110,11 @@ def abrir_menu_supervisor(usuario, winlog):
                                 fg_color=colors["BUTTON"], width=180, command=mostrar_gestion_manufactura
                                 )
     btn_manufactura.pack(pady=5)
+
+    btn_salir = ctk.CTkButton(menu_lateral, text="Salir",
+                               fg_color="#ff4d4d", width=180,
+                               command=Salir_Programa)
+    btn_salir.pack(side="bottom", pady=10)
 
     btn_cerrar = ctk.CTkButton(menu_lateral, text="Cerrar Sesión",
                                fg_color="#ff4d4d", width=180,

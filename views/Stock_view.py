@@ -32,29 +32,68 @@ def gestion_stock(parent_frame):
     filtro.set("Todos los Materiales")
     filtro.pack(pady=10)
 
-    # Treeview oscuro
-    style = ttk.Style()
-    style.theme_use("default")
-    style.configure("Treeview",
-                    background=colors["BG"],
-                    foreground=colors["TEXT"],
-                    fieldbackground=colors["BG"],
-                    font=("Arial", 14),
-                    rowheight=28)
-    style.map("Treeview",
-              background=[("selected", colors["TOP"])],
-              foreground=[("selected", colors["TEXT"])])
-    style.configure("Treeview.Heading", font=("Arial", 15, "bold"))
-
     frame_tree = ctk.CTkFrame(main, fg_color=colors["FRAME"])
     frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
 
+    scrollbar_y = ctk.CTkScrollbar(frame_tree, orientation="vertical")
+    scrollbar_y.pack(side="right", fill="y")
+
+    # Treeview oscuro
+    style = ttk.Style()
+    style.theme_use("clam")
+    style.configure(
+            "Treeview",
+            background=colors["BG"],
+            foreground=colors["TEXT"],
+            fieldbackground=colors["BG"],
+            bordercolor=colors["FRAME"],
+            font=("Arial", 13),
+            rowheight=28
+        )
+    style.map(
+        "Treeview",
+        background=[("selected", colors["TOP"])],
+        foreground=[("selected", colors["BUTTON_TXT"])]
+        )
+    style.configure(
+            "Treeview.Heading",
+            background=colors["TOP"],        
+            foreground=colors["BUTTON_TXT"],  
+            font=("Arial", 15, "bold"),
+            relief="flat"                 
+        )
+    
+    sort_state = {}
+
+    def ordenar_por_columna(col):
+        # Obtiene todos los items actuales
+        datos = [(dgv.set(k, col), k) for k in dgv.get_children("")]
+            
+        # Intenta convertir a número si corresponde
+        try:
+            datos = [(float(v), k) for v, k in datos]
+        except ValueError:
+            pass  # si no es número, lo deja como texto
+            
+        # Alterna entre ascendente y descendente
+        reverse = sort_state.get(col, False)
+        datos.sort(reverse=reverse)
+            
+        # Reorganiza los items
+        for index, (_, k) in enumerate(datos):
+            dgv.move(k, "", index)
+            
+        # Guarda el nuevo estado de orden
+        sort_state[col] = not reverse
+
     columnas = ("ID","Nombre","Stock","ID Proveedor","Proveedor","Max Ingreso","Estado")
-    dgv = ttk.Treeview(frame_tree, columns=columnas, show="headings")
-    for c in columnas:
-        dgv.heading(c, text=c)
-        dgv.column(c, anchor="center", width=120)
+    dgv = ttk.Treeview(frame_tree, columns=columnas, show="headings", yscrollcommand=scrollbar_y.set)
+    for col in columnas:
+        dgv.heading(col, text=col, command=lambda c=col: ordenar_por_columna(c))
+        dgv.column(col, anchor="center", width=150)
     dgv.pack(fill="both", expand=True, padx=5, pady=5)
+
+    scrollbar_y.configure(command=dgv.yview)
 
     # Diccionario de estados
     ESTADOS = {

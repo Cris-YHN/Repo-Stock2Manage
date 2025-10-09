@@ -1,44 +1,83 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
+from assets.Themes import themes
 from controllers.CPControllers import Buscar_proveedor_por_nombre, listar_cp
 from controllers.ProveedorControllers import (
     listar_proveedores, Buscar_proveedor_por_id,
     crear_proveedor, modificar_proveedor
 )
 
-COLOR_BG = "#16161a"
-COLOR_FRAME = "#242629"
-COLOR_TOP = "#2cb67d"
-COLOR_BTN = "#7f5af0"
-
 def gestion_proveedores(parent_frame):
+    colors = themes.get_colors()
+
     for w in parent_frame.winfo_children():
         w.destroy()
 
-    main = ctk.CTkFrame(parent_frame, fg_color=COLOR_BG)
+    main = ctk.CTkFrame(parent_frame, fg_color=colors["BG"])
     main.pack(fill="both", expand=True)
+
+    frame_tree = ctk.CTkFrame(main, fg_color=colors["FRAME"])
+    frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
+
+    scrollbar_y = ctk.CTkScrollbar(frame_tree, orientation="vertical")
+    scrollbar_y.pack(side="right", fill="y")
 
     # Treeview
     style = ttk.Style()
-    style.theme_use("default")
-    style.configure("Treeview",
-                    background=COLOR_BG,
-                    foreground="white",
-                    fieldbackground=COLOR_BG,
-                    rowheight=28)
-    style.map("Treeview",
-              background=[("selected", COLOR_TOP)],
-              foreground=[("selected", "white")])
+    style.theme_use("clam")
+    style.configure(
+            "Treeview",
+            background=colors["BG"],
+            foreground=colors["TEXT"],
+            fieldbackground=colors["BG"],
+            bordercolor=colors["FRAME"],
+            font=("Arial", 13),
+            rowheight=28
+        )
+    style.map(
+        "Treeview",
+        background=[("selected", colors["TOP"])],
+        foreground=[("selected", colors["BUTTON_TXT"])]
+        )
+    style.configure(
+            "Treeview.Heading",
+            background=colors["TOP"],        
+            foreground=colors["BUTTON_TXT"],  
+            font=("Arial", 15, "bold"),
+            relief="flat"                 
+        )
+    
+    sort_state = {}
 
-    frame_tree = ctk.CTkFrame(main, fg_color=COLOR_FRAME)
-    frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
+    def ordenar_por_columna(col):
+        # Obtiene todos los items actuales
+        datos = [(dgv.set(k, col), k) for k in dgv.get_children("")]
+            
+        # Intenta convertir a número si corresponde
+        try:
+            datos = [(float(v), k) for v, k in datos]
+        except ValueError:
+            pass  # si no es número, lo deja como texto
+            
+        # Alterna entre ascendente y descendente
+        reverse = sort_state.get(col, False)
+        datos.sort(reverse=reverse)
+            
+        # Reorganiza los items
+        for index, (_, k) in enumerate(datos):
+            dgv.move(k, "", index)
+            
+        # Guarda el nuevo estado de orden
+        sort_state[col] = not reverse
 
     cols = ("ID","Nombre","Codigo Postal","Localidad","Provincia","Calle","Numero","Telefono")
-    dgv = ttk.Treeview(frame_tree, columns=cols, show="headings")
-    for c in cols:
-        dgv.heading(c, text=c)
-        dgv.column(c, anchor="center", width=120)
+    dgv = ttk.Treeview(frame_tree, columns=cols, show="headings", yscrollcommand=scrollbar_y.set)
+    for col in cols:
+        dgv.heading(col, text=col, command=lambda c=col: ordenar_por_columna(c))
+        dgv.column(col, anchor="center", width=150)
     dgv.pack(fill="both", expand=True, padx=5, pady=5)
+
+    scrollbar_y.configure(command=dgv.yview)
 
     def cargar_todos():
         dgv.delete(*dgv.get_children())
@@ -78,7 +117,7 @@ def gestion_proveedores(parent_frame):
                 mini.destroy()
             except Exception as ex:
                 messagebox.showerror("Error", str(ex))
-        ctk.CTkButton(frame_center, text="Buscar", fg_color=COLOR_BTN, command=buscar).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Buscar", fg_color=colors["BUTTON"], command=buscar).pack(pady=10)
 
     def agregar_prov():
         mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
@@ -101,7 +140,7 @@ def gestion_proveedores(parent_frame):
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-        ctk.CTkButton(frame_center, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=10)
 
     def modificar_prov_view():
         datos = get_sel()
@@ -132,7 +171,7 @@ def gestion_proveedores(parent_frame):
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-        ctk.CTkButton(frame_center, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=15)
+        ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=15)
 
     def ver_cp():
         mini = ctk.CTkToplevel(main)
@@ -177,7 +216,7 @@ def gestion_proveedores(parent_frame):
                             values=(cp.codigo_postal, cp.ciudad, cp.provincia, cp.pais))
 
         def buscar_ciudad():
-            win = ctk.CTkToplevel(win); win.transient(main); win.grab_set()
+            win = ctk.CTkToplevel(mini); win.transient(mini); win.grab_set()
             win.title("Buscar Ciudad")
             win.geometry("300x200")
 
@@ -195,25 +234,25 @@ def gestion_proveedores(parent_frame):
                                 values=(cp.codigo_postal, cp.ciudad, cp.provincia, cp.pais))
                 win.destroy()
 
-            ctk.CTkButton(frame_center, text="Buscar", fg_color=COLOR_BTN, command=buscar).pack(pady=10)
+            ctk.CTkButton(frame_center, text="Buscar", fg_color=colors["BUTTON"], command=buscar).pack(pady=10)
 
         # Barra inferior con botones
-        fb = ctk.CTkFrame(mini, fg_color=COLOR_FRAME)
+        fb = ctk.CTkFrame(mini, fg_color=colors["FRAME"])
         fb.pack(fill="x", pady=5)
-        ctk.CTkButton(fb, text="Ver Todos", fg_color=COLOR_BTN, command=cargar_all).pack(side="left", padx=10, pady=10)
-        ctk.CTkButton(fb, text="Buscar Ciudad", fg_color=COLOR_BTN, command=buscar_ciudad).pack(side="left", padx=10, pady=10)
+        ctk.CTkButton(fb, text="Ver Todos", fg_color=colors["BUTTON"], command=cargar_all).pack(side="left", padx=10, pady=10)
+        ctk.CTkButton(fb, text="Buscar Ciudad", fg_color=colors["BUTTON"], command=buscar_ciudad).pack(side="left", padx=10, pady=10)
 
         cargar_all()
 
 
 
     # barra
-    fb = ctk.CTkFrame(main, fg_color=COLOR_FRAME)
+    fb = ctk.CTkFrame(main, fg_color=colors["FRAME"])
     fb.pack(fill="x", pady=5)
-    ctk.CTkButton(fb, text="Ver Todos", fg_color=COLOR_BTN, command=cargar_todos).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Buscar ID", fg_color=COLOR_BTN, command=buscarID).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Agregar", fg_color=COLOR_BTN, command=agregar_prov).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Modificar", fg_color=COLOR_BTN, command=modificar_prov_view).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Ver Códigos Postales", fg_color=COLOR_BTN, command=ver_cp).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Ver Todos", fg_color=colors["BUTTON"], command=cargar_todos).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Buscar ID", fg_color=colors["BUTTON"], command=buscarID).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Agregar", fg_color=colors["BUTTON"], command=agregar_prov).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Modificar", fg_color=colors["BUTTON"], command=modificar_prov_view).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Ver Códigos Postales", fg_color=colors["BUTTON"], command=ver_cp).pack(side="left", padx=10, pady=10)
 
     cargar_todos()

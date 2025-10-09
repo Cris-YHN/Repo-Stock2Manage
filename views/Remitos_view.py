@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
+from assets.Themes import themes
 from controllers.RemitosControllers import (
     listar_remitos, Buscar_remito_por_id,
     modificar_proveedor, listar_detalles_por_remito
@@ -10,41 +11,79 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 import os
 
-COLOR_BG = "#16161a"
-COLOR_FRAME = "#242629"
-COLOR_TOP = "#2cb67d"
-COLOR_BTN = "#7f5af0"
-
 def gestion_remitos(parent_frame):
+    color = themes.get_colors()
+
     # limpiar
     for w in parent_frame.winfo_children():
         w.destroy()
 
-    main = ctk.CTkFrame(parent_frame, fg_color=COLOR_BG)
+    main = ctk.CTkFrame(parent_frame, fg_color=color["BG"])
     main.pack(fill="both", expand=True)
+
+    frame_tree = ctk.CTkFrame(main, fg_color=color["FRAME"])
+    frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
+
+    scrollbar_y = ctk.CTkScrollbar(frame_tree, orientation="vertical")
+    scrollbar_y.pack(side="right", fill="y")
 
     # ---- Treeview
     style = ttk.Style()
-    style.theme_use("default")
-    style.configure("Treeview",
-                    background=COLOR_BG,
-                    foreground="white",
-                    fieldbackground=COLOR_BG,
-                    rowheight=28)
-    style.map("Treeview",
-              background=[("selected", COLOR_TOP)],
-              foreground=[("selected", "white")])
+    style.theme_use("clam")
+    style.configure(
+            "Treeview",
+            background=color["BG"],
+            foreground=color["TEXT"],
+            fieldbackground=color["BG"],
+            bordercolor=color["FRAME"],
+            font=("Arial", 13),
+            rowheight=28
+        )
+    style.map(
+        "Treeview",
+        background=[("selected", color["TOP"])],
+        foreground=[("selected", color["BUTTON_TXT"])]
+        )
+    style.configure(
+            "Treeview.Heading",
+            background=color["TOP"],        
+            foreground=color["BUTTON_TXT"],  
+            font=("Arial", 15, "bold"),
+            relief="flat"                 
+        )
+    
+    sort_state = {}
 
-    frame_tree = ctk.CTkFrame(main, fg_color=COLOR_FRAME)
-    frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
+    def ordenar_por_columna(col):
+        # Obtiene todos los items actuales
+        datos = [(dgv.set(k, col), k) for k in dgv.get_children("")]
+            
+        # Intenta convertir a número si corresponde
+        try:
+            datos = [(float(v), k) for v, k in datos]
+        except ValueError:
+            pass  # si no es número, lo deja como texto
+            
+        # Alterna entre ascendente y descendente
+        reverse = sort_state.get(col, False)
+        datos.sort(reverse=reverse)
+            
+        # Reorganiza los items
+        for index, (_, k) in enumerate(datos):
+            dgv.move(k, "", index)
+            
+        # Guarda el nuevo estado de orden
+        sort_state[col] = not reverse
 
     dgv = ttk.Treeview(frame_tree,
                        columns=("ID Remito", "Fecha", "ID Proveedor", "Nombre Proveedor"),
-                       show="headings")
-    for c in ("ID Remito", "Fecha", "ID Proveedor", "Nombre Proveedor"):
-        dgv.heading(c, text=c)
-        dgv.column(c, anchor="center", width=150)
+                       show="headings", yscrollcommand=scrollbar_y.set)
+    for col in ("ID Remito", "Fecha", "ID Proveedor", "Nombre Proveedor"):
+        dgv.heading(col, text=col, command=lambda c=col: ordenar_por_columna(c))
+        dgv.column(col, anchor="center", width=150)
     dgv.pack(fill="both", expand=True, padx=5, pady=5)
+
+    scrollbar_y.configure(command=dgv.yview)
 
     def cargar_todos():
         dgv.delete(*dgv.get_children())
@@ -81,7 +120,7 @@ def gestion_remitos(parent_frame):
                 mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-        ctk.CTkButton(frame_center, text="Buscar", fg_color=COLOR_BTN, command=go).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Buscar", fg_color=color["BUTTON"], command=go).pack(pady=10)
 
     def modificar_prov_view():
         datos = get_sel()
@@ -102,7 +141,7 @@ def gestion_remitos(parent_frame):
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-        ctk.CTkButton(frame_center, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Guardar", fg_color=color["BUTTON"], command=guardar).pack(pady=10)
 
     def ver_detalles():
         datos = get_sel()
@@ -131,11 +170,11 @@ def gestion_remitos(parent_frame):
         messagebox.showinfo("PDF", f"Generado: {os.path.abspath(fname)}")
 
     # barra de botones
-    fb = ctk.CTkFrame(main, fg_color=COLOR_FRAME)
+    fb = ctk.CTkFrame(main, fg_color=color["FRAME"])
     fb.pack(fill="x", pady=5)
-    ctk.CTkButton(fb, text="Ver Todos", fg_color=COLOR_BTN, command=cargar_todos).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Buscar ID", fg_color=COLOR_BTN, command=buscarID).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Modificar Proveedor", fg_color=COLOR_BTN, command=modificar_prov_view).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Ver Detalles", fg_color=COLOR_BTN, command=ver_detalles).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Ver Todos", fg_color=color["BUTTON"], command=cargar_todos).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Buscar ID", fg_color=color["BUTTON"], command=buscarID).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Modificar Proveedor", fg_color=color["BUTTON"], command=modificar_prov_view).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Ver Detalles", fg_color=color["BUTTON"], command=ver_detalles).pack(side="left", padx=10, pady=10)
 
     cargar_todos()

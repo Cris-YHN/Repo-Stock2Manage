@@ -5,6 +5,7 @@ def registrar_usuario(nombre, apellido, contrasenia, puesto):
     contr_hashed = UsuarioModel.hash_password(contrasenia)
     usuario = Usuario(nombre=nombre, apellido=apellido, contrasenia=contr_hashed, puesto=puesto, activo=0)
     UsuarioModel.insertar(usuario)
+    return usuario
 
 def login_usuario(id, contrasenia):
     usuario = UsuarioModel.obtener_por_id(id)

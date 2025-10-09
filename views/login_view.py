@@ -1,7 +1,8 @@
 import customtkinter as ctk
-from PIL import Image
+from PIL import Image, ImageTk
 from tkinter import messagebox
 from controllers.UsuarioControllers import registrar_usuario, login_usuario
+from controllers.LogsController import registrar # registrar(usuario, "Error al Logearse.")
 from views.Menu_Admin_view import abrir_menu_admin
 from views.Menu_Operario_view import abrir_menu_operario
 from views.Menu_Supervisor_view import abrir_menu_supervisor
@@ -16,7 +17,21 @@ def ventana_login():
     winlog.geometry("600x600")
     winlog.configure(fg_color=colors["BG"])
     winlog.title("Inicio de sesión")
-    winlog.iconbitmap("assets/images/icono.ico")
+
+    # 🔥 Cargar ícono global para toda la app
+    icon_path = "assets/images/icono.ico"
+    try:
+        winlog.iconbitmap(icon_path)  # Tkinter clásico (solo por compatibilidad)
+    except Exception as e:
+        print("iconbitmap fallback:", e)
+
+    # CustomTkinter: se aplica correctamente después de update()
+    winlog.update_idletasks()
+    try:
+        icon_image = ImageTk.PhotoImage(Image.open(icon_path))
+        winlog.wm_iconphoto(True, icon_image)
+    except Exception as e:
+        print("wm_iconphoto fallback:", e)
 
     def apply_theme():
         c = themes.get_colors()
@@ -60,9 +75,11 @@ def ventana_login():
             if usuario:
                 if usuario.activo == 0:
                     messagebox.showerror("Acceso denegado", "Tu usuario está inactivo. Contacta al administrador.")
+                    registrar(usuario, "Error al Logearse.")
                     return
 
                 messagebox.showinfo("Bienvenido", f"Hola {usuario.nombre} {usuario.apellido}")
+                registrar(usuario, "Se logeo con exito.")
 
                 winlog.withdraw()
 
@@ -107,8 +124,9 @@ def ventana_login():
                 contr = entry_pass_reg.get()
                 puesto = combo_puesto.get()
                 if nombre and apellido and contr:
-                    registrar_usuario(nombre, apellido, contr, puesto)
+                    usuario = registrar_usuario(nombre, apellido, contr, puesto)
                     messagebox.showinfo("Éxito", "Usuario registrado correctamente")
+                    registrar(usuario, "Error al Logearse.")
                     reg.destroy()
                 else:
                     messagebox.showerror("Error", "Todos los campos son obligatorios")

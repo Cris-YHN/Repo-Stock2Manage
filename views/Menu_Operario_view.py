@@ -13,54 +13,6 @@ def abrir_menu_operario(usuario, winlog):
     menuope.configure(fg_color=colors["BG"])
     menuope.iconbitmap("assets/images/icono.ico")
 
-    def apply_theme():
-        c = themes.get_colors()
-
-        # Fondos principales
-        menuope.configure(fg_color=c["BG"])
-        top_panel.configure(fg_color=c["TOP"])
-        menu_lateral.configure(fg_color=c["FRAME"])
-        contenedor.configure(fg_color=c["BG"])
-
-        # Labels fijos
-        lbl_titulo.configure(text_color=c["BUTTON_TXT"])
-        lbl_usuario.configure(text_color=c["BUTTON_TXT"])
-
-        # Menú lateral
-        for widget in menu_lateral.winfo_children():
-            if isinstance(widget, ctk.CTkLabel):
-                widget.configure(text_color=c["TEXT"])
-            elif isinstance(widget, ctk.CTkButton):
-                if widget.cget("text") == "Cerrar Sesión":
-                    widget.configure(fg_color="#ff4d4d", text_color="white")
-                else:
-                    widget.configure(fg_color=c["BUTTON"], text_color=c["BUTTON_TXT"])
-
-        # 🔥 Nuevo: recorrer todo el contenedor (frames, labels, buttons, etc.)
-        def update_widgets(parent):
-            for widget in parent.winfo_children():
-                # Actualiza fondo de frames
-                if isinstance(widget, ctk.CTkFrame):
-                    widget.configure(fg_color=c["BG"])
-                    update_widgets(widget)   # 👈 recursivo para hijos del frame
-                # Actualiza labels
-                elif isinstance(widget, ctk.CTkLabel):
-                    widget.configure(text_color=c["TEXT"])
-                # Actualiza botones
-                elif isinstance(widget, ctk.CTkButton):
-                    widget.configure(fg_color=c["BUTTON"], text_color=c["BUTTON_TXT"])
-                # Entradas y combobox
-                elif isinstance(widget, ctk.CTkEntry) or isinstance(widget, ctk.CTkComboBox):
-                    widget.configure(fg_color=c["FRAME"], text_color=c["TEXT"])
-
-        update_widgets(contenedor)
-
-    def toggle():
-        themes.toggle_theme()
-        ctk.set_appearance_mode(themes.current_mode)  # 🔥 sincroniza con CustomTkinter
-        apply_theme()
-        btn_tema.configure(text="☀️ Modo Claro" if themes.current_mode == "dark" else "🌙 Modo Oscuro")
-
     # Panel superior (verde)
     top_panel = ctk.CTkFrame(menuope, fg_color=colors["TOP"], height=60)
     top_panel.pack(fill="x")
@@ -102,7 +54,13 @@ def abrir_menu_operario(usuario, winlog):
 
     def cerrar_sesion():
         menuope.destroy()        # cierra el menú
-        winlog.deiconify()       # vuelve a mostrar el login
+        winlog.deiconify()       # 🔥 vuelve a mostrar el login
+
+    def Salir_Programa():
+        menuope.destroy()        # cierra el menú
+        winlog.deiconify()       # 🔥 vuelve a mostrar el login
+        winlog.destroy()
+
 
     def gestion_procesar_manufactura():
         limpiar_contenedor()
@@ -189,10 +147,10 @@ def abrir_menu_operario(usuario, winlog):
                                 command=gestion_procesar_manufactura)
     btn_gestion.pack(pady=5)
 
-    btn_tema = ctk.CTkButton(menu_lateral, text="🌙 Modo Oscuro",
-                               fg_color=colors["BUTTON"], width=180,
-                               command=toggle)
-    btn_tema.pack(side="bottom", pady=10)
+    btn_salir = ctk.CTkButton(menu_lateral, text="Salir",
+                               fg_color="#ff4d4d", width=180,
+                               command=Salir_Programa)
+    btn_salir.pack(side="bottom", pady=10)
 
     btn_cerrar = ctk.CTkButton(menu_lateral, text="Cerrar Sesión",
                                fg_color="#ff4d4d", width=180,

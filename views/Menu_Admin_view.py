@@ -2,11 +2,13 @@ import customtkinter as ctk
 from tkinter import ttk, messagebox
 from PIL import Image
 from assets.Themes import themes
+from controllers.LogsController import registrar
 from controllers.UsuarioControllers import (
     listar_usuarios, listar_activos, listar_inactivos, listar_solicitudes,
     modificar_usuario, baja_usuario, alta_usuario,
     aprobar_usuario, rechazar_usuario, buscar_por_apellido
 )
+from views.Logs_view import mostrar_logs
 
 # Funcion de utilidad para botones
 def set_button_state(btn, enabled: bool):
@@ -18,78 +20,11 @@ def set_button_state(btn, enabled: bool):
 
 def abrir_menu_admin(usuario, winlog):
     colors = themes.get_colors()
-    menuadm = ctk.CTkToplevel()
+    menuadm = ctk.CTkToplevel(winlog)
+    menuadm.state("zoomed")
     menuadm.geometry("1100x600")
     menuadm.title("Panel Administrador")
     menuadm.configure(fg_color=colors["BG"])
-    menuadm.iconbitmap("assets/images/icono.ico")
-
-    def apply_theme():
-        c = themes.get_colors()
-        menuadm.configure(fg_color=c["BG"])
-        top_panel.configure(fg_color=c["TOP"])
-        menu_lateral.configure(fg_color=c["FRAME"])
-        contenedor.configure(fg_color=c["BG"])
-
-        # Actualizar labels y botones
-        lbl_titulo.configure(text_color=c["BUTTON_TXT"])
-        lbl_usuario.configure(text_color=c["BUTTON_TXT"])
-
-        for widget in menu_lateral.winfo_children():
-            if isinstance(widget, ctk.CTkLabel):
-                widget.configure(text_color=c["TEXT"])
-            elif isinstance(widget, ctk.CTkButton):
-                if widget.cget("text") == "Cerrar Sesión":
-                    widget.configure(fg_color="#ff4d4d", text_color="white")
-                else:
-                    widget.configure(fg_color=c["BUTTON"], text_color=c["BUTTON_TXT"])
-
-        # --- 🔥 Treeview dinámico que realmente cambia ---
-        style = ttk.Style()
-
-        # 💡 alternar tema base para romper la caché visual
-        current_theme = style.theme_use()
-        style.theme_use("clam" if current_theme == "default" else "default")
-
-        # aplicar nuevos colores
-        style.configure(
-            "Treeview",
-            background=c["BG"],
-            foreground=c["TEXT"],
-            fieldbackground=c["BG"],
-            bordercolor=c["FRAME"],
-            font=("Arial", 13),
-            rowheight=28
-        )
-        style.map(
-            "Treeview",
-            background=[("selected", c["TOP"])],
-            foreground=[("selected", c["TEXT"])]
-        )
-        style.configure(
-            "Treeview.Heading",
-            font=("Arial", 14, "bold"),
-            background=c["TOP"],
-            foreground="white"
-        )
-
-        # 🔧 Reasignar y refrescar todos los Treeview visibles
-        def refrescar_treeview(widget):
-            for child in widget.winfo_children():
-                if isinstance(child, ttk.Treeview):
-                    child.configure(style="Treeview")
-                    child.update_idletasks()
-                else:
-                    refrescar_treeview(child)
-        refrescar_treeview(contenedor)
-
-    def toggle():
-        themes.toggle_theme()
-        ctk.set_appearance_mode(themes.current_mode)  # 🔥 sincroniza con CustomTkinter
-        apply_theme()                                 # ahora actualiza TODO
-        btn_tema.configure(
-            text="☀️ Modo Claro" if themes.current_mode == "dark" else "🌙 Modo Oscuro"
-        )
 
     # Panel superior (verde)
     top_panel = ctk.CTkFrame(menuadm, fg_color=colors["TOP"], height=60)
@@ -140,6 +75,11 @@ def abrir_menu_admin(usuario, winlog):
         menuadm.destroy()        # cierra el menú
         winlog.deiconify()       # 🔥 vuelve a mostrar el login
 
+    def Salir_Programa():
+        menuadm.destroy()        # cierra el menú
+        winlog.deiconify()       # 🔥 vuelve a mostrar el login
+        winlog.destroy()
+
     # Para ingresar al modo de gestion de usuarios
     def mostrar_gestion_usuarios():
         nonlocal frame_gestion, dgv, combo_filtro, frame_botones
@@ -156,32 +96,82 @@ def abrir_menu_admin(usuario, winlog):
         frame_tree = ctk.CTkFrame(contenedor, fg_color=colors["FRAME"])
         frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
 
-        dgv = ttk.Treeview(frame_tree, columns=("ID","Nombre","Apellido","Puesto","Estado"), show="headings")
+        scrollbar_y = ctk.CTkScrollbar(frame_tree, orientation="vertical")
+        scrollbar_y.pack(side="right", fill="y")
+
+        style = ttk.Style()
+        style.theme_use("clam")
+        style.configure(
+            "Treeview",
+            background=colors["BG"],
+            foreground=colors["TEXT"],
+            fieldbackground=colors["BG"],
+            bordercolor=colors["FRAME"],
+            font=("Arial", 13),
+            rowheight=28
+        )
+        style.map(
+            "Treeview",
+            background=[("selected", colors["TOP"])],
+            foreground=[("selected", colors["BUTTON_TXT"])]
+        )
+        style.configure(
+            "Treeview.Heading",
+            background=colors["TOP"],        
+            foreground=colors["BUTTON_TXT"],  
+            font=("Arial", 14, "bold"),
+            relief="flat"                 
+        )
+
+        sort_state = {}
+
+        def ordenar_por_columna(col):
+            # Obtiene todos los items actuales
+            datos = [(dgv.set(k, col), k) for k in dgv.get_children("")]
+            
+            # Intenta convertir a número si corresponde
+            try:
+                datos = [(float(v), k) for v, k in datos]
+            except ValueError:
+                pass  # si no es número, lo deja como texto
+            
+            # Alterna entre ascendente y descendente
+            reverse = sort_state.get(col, False)
+            datos.sort(reverse=reverse)
+            
+            # Reorganiza los items
+            for index, (_, k) in enumerate(datos):
+                dgv.move(k, "", index)
+            
+            # Guarda el nuevo estado de orden
+            sort_state[col] = not reverse
+
+        dgv = ttk.Treeview(frame_tree, columns=("ID","Nombre","Apellido","Puesto","Estado"), show="headings", yscrollcommand=scrollbar_y.set)
         for col in ("ID","Nombre","Apellido","Puesto","Estado"):
-            dgv.heading(col, text=col)
+            dgv.heading(col, text=col, command=lambda c=col: ordenar_por_columna(c))
             dgv.column(col, anchor="center", width=150)
         dgv.pack(fill="both", expand=True, padx=5, pady=5)
+
+        scrollbar_y.configure(command=dgv.yview)
 
         # Frame botones
         frame_botones = ctk.CTkFrame(contenedor, fg_color=colors["FRAME"])
         frame_botones.pack(fill="x", pady=5)
 
+        # Frame interno para centrar los botones
+        botones_center = ctk.CTkFrame(frame_botones, fg_color="transparent")
+        botones_center.pack(anchor="center")
+
         # Botones
-        btn_buscar_apellido = ctk.CTkButton(frame_botones, text="Buscar Apellido", command=buscar_apellido)
-        btn_modificar = ctk.CTkButton(frame_botones, text="Modificar", command=modificar)
-        btn_baja      = ctk.CTkButton(frame_botones, text="Dar Baja", command=baja)
-        btn_alta      = ctk.CTkButton(frame_botones, text="Dar Alta", command=alta)
-        btn_aprobar   = ctk.CTkButton(frame_botones, text="Aprobar", command=aprobar)
-        btn_rechazar  = ctk.CTkButton(frame_botones, text="Rechazar", command=rechazar)
+        btn_buscar_apellido = ctk.CTkButton(botones_center, text="Buscar Apellido", command=buscar_apellido)
+        btn_modificar = ctk.CTkButton(botones_center, text="Modificar", command=modificar)
+        btn_baja      = ctk.CTkButton(botones_center, text="Dar Baja", command=baja)
+        btn_alta      = ctk.CTkButton(botones_center, text="Dar Alta", command=alta)
+        btn_aprobar   = ctk.CTkButton(botones_center, text="Aprobar", command=aprobar)
+        btn_rechazar  = ctk.CTkButton(botones_center, text="Rechazar", command=rechazar)
 
-
-        # Posicionar
-        btn_buscar_apellido.pack(side="left", padx=5)
-        btn_modificar.pack(side="left", padx=5)
-        btn_baja.pack(side="left", padx=5)
-        btn_alta.pack(side="left", padx=5)
-        btn_aprobar.pack(side="left", padx=5)
-        btn_rechazar.pack(side="left", padx=5)
+        for b in (btn_buscar_apellido, btn_modificar, btn_baja, btn_alta, btn_aprobar, btn_rechazar):
+            b.pack(side="left", padx=5)
 
         # Guardar referencias para cambio de estado
         frame_botones.btn_buscar_apellido = btn_buscar_apellido
@@ -256,6 +246,7 @@ def abrir_menu_admin(usuario, winlog):
         def guardar():
             modificar_usuario(datos[0], entry_nombre.get(), entry_apellido.get(), combo_puesto.get())
             messagebox.showinfo("Éxito","Usuario actualizado")
+            registrar(usuario, "Modificacion a un Usuario.")
             mini.destroy()
             cargar_datos()
 
@@ -301,22 +292,34 @@ def abrir_menu_admin(usuario, winlog):
     def baja():
         datos = get_sel()
         if datos:
-            baja_usuario(datos[0]); cargar_datos()
+            baja_usuario(datos[0])
+            registrar(usuario, "Se dio de baja un usuario.") 
+            cargar_datos()
 
     def alta():
         datos = get_sel()
         if datos:
-            alta_usuario(datos[0]); cargar_datos()
+            alta_usuario(datos[0])
+            registrar(usuario, "Se dio de alta un usuario.")
+            cargar_datos()
 
     def aprobar():
         datos = get_sel()
         if datos:
-            aprobar_usuario(datos[0]); cargar_datos()
+            aprobar_usuario(datos[0])
+            registrar(usuario, "Solicitud aprobada.")
+            cargar_datos()
 
     def rechazar():
         datos = get_sel()
         if datos:
-            rechazar_usuario(datos[0]); cargar_datos()
+            rechazar_usuario(datos[0])
+            registrar(usuario, "Solicitud rechazada.")
+            cargar_datos()
+    
+    def mostrar_gestion_logs():
+        limpiar_contenedor()
+        mostrar_logs(contenedor)
 
     # Botones menú lateral
     btn_inicio = ctk.CTkButton(menu_lateral, text="Inicio",
@@ -329,14 +332,20 @@ def abrir_menu_admin(usuario, winlog):
                                 command=mostrar_gestion_usuarios)
     btn_gestion.pack(pady=5)
 
+    btn_logs = ctk.CTkButton(menu_lateral, text="Ver Logs", 
+                         fg_color=colors["BUTTON"],
+                         text_color=colors["BUTTON_TXT"],
+                         command=mostrar_gestion_logs)
+    btn_logs.pack(pady=5, fill="x")
+
+    btn_salir = ctk.CTkButton(menu_lateral, text="Salir",
+                               fg_color="#ff4d4d", width=180,
+                               command=Salir_Programa)
+    btn_salir.pack(side="bottom", pady=10)
+
     btn_cerrar = ctk.CTkButton(menu_lateral, text="Cerrar Sesión",
                                fg_color="#ff4d4d", width=180,
                                command=cerrar_sesion)
     btn_cerrar.pack(side="bottom", pady=10)
-
-    btn_tema = ctk.CTkButton(menu_lateral, text="🌙 Modo Oscuro",
-                               fg_color=colors["BUTTON"], width=180,
-                               command=toggle)
-    btn_tema.pack(side="bottom", pady=10)
 
     mostrar_inicio()

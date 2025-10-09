@@ -1,43 +1,80 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
+from assets.Themes import themes
 from controllers.ManufacturaControllers import (crear_manufactura, listar_manufactura, listar_pasos, Buscar_manufactura_por_nombre, modificar_manufactura, crear_paso,modificar_paso)
 from controllers.MaterialControllers import (verificar_existencia)
 
-#Colores
-COLOR_BG = "#16161a"
-COLOR_FRAME = "#242629"
-COLOR_TOP = "#2cb67d"
-COLOR_BTN = "#7f5af0"
-
 def gestion_crear_manufactura(parent_frame):
+    colors = themes.get_colors()
     for w in parent_frame.winfo_children():
         w.destroy()
     
-    main = ctk.CTkFrame(parent_frame, fg_color=COLOR_BG)
+    main = ctk.CTkFrame(parent_frame, fg_color=colors["BG"])
     main.pack(fill="both", expand=True)
+
+    frame_tree = ctk.CTkFrame(main, fg_color=colors["FRAME"])
+    frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
+
+    scrollbar_y = ctk.CTkScrollbar(frame_tree, orientation="vertical")
+    scrollbar_y.pack(side="right", fill="y")
 
     # Treeview
     style = ttk.Style()
-    style.theme_use("default")
-    style.configure("Treeview",
-                    background=COLOR_BG,
-                    foreground="white",
-                    fieldbackground=COLOR_BG,
-                    rowheight=28)
-    style.map("Treeview",
-              background=[("selected", COLOR_TOP)],
-              foreground=[("selected", "white")])
+    style.theme_use("clam")
+    style.configure(
+            "Treeview",
+            background=colors["BG"],
+            foreground=colors["TEXT"],
+            fieldbackground=colors["BG"],
+            bordercolor=colors["FRAME"],
+            font=("Arial", 13),
+            rowheight=28
+        )
+    style.map(
+        "Treeview",
+        background=[("selected", colors["TOP"])],
+        foreground=[("selected", colors["BUTTON_TXT"])]
+        )
+    style.configure(
+            "Treeview.Heading",
+            background=colors["TOP"],        
+            foreground=colors["BUTTON_TXT"],  
+            font=("Arial", 15, "bold"),
+            relief="flat"                 
+        )
+    
+    sort_state = {}
 
-    # creacion del frame del tree
-    frame_tree = ctk.CTkFrame(main, fg_color=COLOR_FRAME)
-    frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
+    def ordenar_por_columna(col):
+        # Obtiene todos los items actuales
+        datos = [(dgv.set(k, col), k) for k in dgv.get_children("")]
+            
+        # Intenta convertir a número si corresponde
+        try:
+            datos = [(float(v), k) for v, k in datos]
+        except ValueError:
+            pass  # si no es número, lo deja como texto
+            
+        # Alterna entre ascendente y descendente
+        reverse = sort_state.get(col, False)
+        datos.sort(reverse=reverse)
+            
+        # Reorganiza los items
+        for index, (_, k) in enumerate(datos):
+            dgv.move(k, "", index)
+            
+        # Guarda el nuevo estado de orden
+        sort_state[col] = not reverse
+
 
     # Setear columnas
-    dgv = ttk.Treeview(frame_tree, columns=("ID", "Nombre"), show="headings")
-    for c in ("ID", "Nombre"):
-        dgv.heading(c, text=c)
-        dgv.column(c, anchor="center", width=200)
+    dgv = ttk.Treeview(frame_tree, columns=("ID", "Nombre"), show="headings", yscrollcommand=scrollbar_y.set)
+    for col in ("ID", "Nombre"):
+        dgv.heading(col, text=col, command=lambda c=col: ordenar_por_columna(c))
+        dgv.column(col, anchor="center", width=150)
     dgv.pack(fill="both", expand=True, padx=5, pady=5)
+
+    scrollbar_y.configure(command=dgv.yview)
 
     def cargar_todos():
         dgv.delete(*dgv.get_children())
@@ -74,7 +111,7 @@ def gestion_crear_manufactura(parent_frame):
             cargar_todos()
             mini.destroy()
 
-        ctk.CTkButton(frame_center, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=10)
     
     def buscarXNombre():
         mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
@@ -101,7 +138,7 @@ def gestion_crear_manufactura(parent_frame):
             except Exception as e:
                 messagebox.showerror("Error", str(e))
             
-        ctk.CTkButton(frame_center, text="Buscar", fg_color=COLOR_BTN, command=go).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Buscar", fg_color=colors["BUTTON"], command=go).pack(pady=10)
 
     
     def modificar():
@@ -123,7 +160,7 @@ def gestion_crear_manufactura(parent_frame):
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-        ctk.CTkButton(frame_center, text="Guardar", fg_color=COLOR_BTN, command=guardar).pack(pady=10)
+        ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=10)
     
     def ver_pasos():
         datos = get_sel()
@@ -137,15 +174,20 @@ def gestion_crear_manufactura(parent_frame):
         mini.transient(main)
         mini.grab_set()
 
-        frame_pasos = ctk.CTkFrame(mini, fg_color=COLOR_FRAME)
+        frame_pasos = ctk.CTkFrame(mini, fg_color=colors["FRAME"])
         frame_pasos.pack(fill="both", expand=True, padx=10, pady=10)
 
+        scrollbar_y = ctk.CTkScrollbar(frame_pasos, orientation="vertical")
+        scrollbar_y.pack(side="right", fill="y")
+
         columnas_p = ("Paso", "ID Material", "Nombre Material", "Cantidad Necesaria")
-        tree_pasos = ttk.Treeview(frame_pasos, columns=columnas_p, show="headings")
+        tree_pasos = ttk.Treeview(frame_pasos, columns=columnas_p, show="headings", yscrollcommand=scrollbar_y.set)
         for c in columnas_p:
             tree_pasos.heading(c, text=c)
             tree_pasos.column(c, anchor="center", width=120)
         tree_pasos.pack(fill="both", expand=True, padx=5, pady=5)
+
+        scrollbar_y.configure(command=tree_pasos.yview)
 
         def cargar_pasos():
             tree_pasos.delete(*tree_pasos.get_children())
@@ -154,7 +196,7 @@ def gestion_crear_manufactura(parent_frame):
                                 values=(p.id_paso, p.id_material, p.nombre, p.cantidad_necesaria))
 
         # -------- Botones dentro de la ventana de pasos --------
-        btn_frame = ctk.CTkFrame(mini, fg_color=COLOR_FRAME)
+        btn_frame = ctk.CTkFrame(mini, fg_color=colors["FRAME"])
         btn_frame.pack(fill="x", pady=5)
 
         def agregar_paso_view():
@@ -225,9 +267,9 @@ def gestion_crear_manufactura(parent_frame):
                     messagebox.showerror("Error", "Ingrese valores numéricos válidos.")
 
             # Botones en la ventana de agregar
-            ctk.CTkButton(win, text="Agregar Material", fg_color=COLOR_BTN,
+            ctk.CTkButton(win, text="Agregar Material", fg_color=colors["BUTTON"],
                         command=add_row).pack(pady=5)
-            ctk.CTkButton(win, text="Guardar", fg_color=COLOR_BTN,
+            ctk.CTkButton(win, text="Guardar", fg_color=colors["BUTTON"],
                         command=guardar_pasos).pack(pady=5)
 
             # Comienza con una fila inicial
@@ -265,31 +307,31 @@ def gestion_crear_manufactura(parent_frame):
                 try:
                     id_material = int(entry_mat.get())
                     cantidad = int(entry_cant.get())
-                    modificar_paso(id_manuf, paso_nro, mat_original, int(entry_mat.get()), int(entry_cant.get()))
+                    modificar_paso(id_manuf, paso_nro, mat_original, id_material, cantidad)
                     cargar_pasos()
                     win.destroy()
                 except ValueError:
                     messagebox.showerror("Error", "Datos inválidos")
 
-            ctk.CTkButton(frame_center, text="Guardar Cambios", fg_color=COLOR_BTN,
+            ctk.CTkButton(frame_center, text="Guardar Cambios", fg_color=colors["BUTTON"],
                         command=guardar_modificacion).pack(pady=10)
 
         cargar_pasos()
 
-        ctk.CTkButton(btn_frame, text="Agregar Paso", fg_color=COLOR_BTN,
+        ctk.CTkButton(btn_frame, text="Agregar Paso", fg_color=colors["BUTTON"],
                     command=agregar_paso_view).pack(side="left", padx=10, pady=10)
-        ctk.CTkButton(btn_frame, text="Modificar Paso", fg_color=COLOR_BTN,
+        ctk.CTkButton(btn_frame, text="Modificar Paso", fg_color=colors["BUTTON"],
                     command=modificar_paso_view).pack(side="left", padx=10, pady=10)
 
 
 
     # barra de botones
-    fb = ctk.CTkFrame(main, fg_color=COLOR_FRAME)
+    fb = ctk.CTkFrame(main, fg_color=colors["FRAME"])
     fb.pack(fill="x", pady=5)
-    ctk.CTkButton(fb, text="Ver Manufacturas", fg_color=COLOR_BTN, command=cargar_todos).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Agregar Manufacturas", fg_color=COLOR_BTN, command=agregar_manufactura).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Buscar Nombre", fg_color=COLOR_BTN, command=buscarXNombre).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Modificar Manufactura", fg_color=COLOR_BTN, command=modificar).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Ver Pasos", fg_color=COLOR_BTN, command=ver_pasos).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Ver Manufacturas", fg_color=colors["BUTTON"], command=cargar_todos).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Agregar Manufacturas", fg_color=colors["BUTTON"], command=agregar_manufactura).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Buscar Nombre", fg_color=colors["BUTTON"], command=buscarXNombre).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Modificar Manufactura", fg_color=colors["BUTTON"], command=modificar).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(fb, text="Ver Pasos", fg_color=colors["BUTTON"], command=ver_pasos).pack(side="left", padx=10, pady=10)
 
     cargar_todos()
