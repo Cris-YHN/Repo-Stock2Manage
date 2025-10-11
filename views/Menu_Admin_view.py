@@ -146,8 +146,8 @@ def abrir_menu_admin(usuario, winlog):
             # Guarda el nuevo estado de orden
             sort_state[col] = not reverse
 
-        dgv = ttk.Treeview(frame_tree, columns=("ID","Nombre","Apellido","Puesto","Estado"), show="headings", yscrollcommand=scrollbar_y.set)
-        for col in ("ID","Nombre","Apellido","Puesto","Estado"):
+        dgv = ttk.Treeview(frame_tree, columns=("ID","Nombre","Apellido","Email","Puesto","Estado"), show="headings", yscrollcommand=scrollbar_y.set)
+        for col in ("ID","Nombre","Apellido","Email","Puesto","Estado"):
             dgv.heading(col, text=col, command=lambda c=col: ordenar_por_columna(c))
             dgv.column(col, anchor="center", width=150)
         dgv.pack(fill="both", expand=True, padx=5, pady=5)
@@ -196,16 +196,16 @@ def abrir_menu_admin(usuario, winlog):
         sel = combo_filtro.get()
         if sel == "Todos los Usuarios":
             for u in listar_usuarios():
-                dgv.insert("", "end", values=(u.id_usuario,u.nombre,u.apellido,u.puesto,ESTADOS.get(u.activo, "Desconocido")))
+                dgv.insert("", "end", values=(u.id_usuario,u.nombre,u.apellido,u.email,u.puesto,ESTADOS.get(u.activo, "Desconocido")))
         elif sel == "Usuarios Activos":
             for u in listar_activos():
-                dgv.insert("", "end", values=(u.id_usuario,u.nombre,u.apellido,u.puesto,ESTADOS.get(u.activo, "Desconocido")))
+                dgv.insert("", "end", values=(u.id_usuario,u.nombre,u.apellido,u.email,u.puesto,ESTADOS.get(u.activo, "Desconocido")))
         elif sel == "Usuarios Inactivos":
             for u in listar_inactivos():
-                dgv.insert("", "end", values=(u.id_usuario,u.nombre,u.apellido,u.puesto,ESTADOS.get(u.activo, "Desconocido")))
+                dgv.insert("", "end", values=(u.id_usuario,u.nombre,u.apellido,u.email,u.puesto,ESTADOS.get(u.activo, "Desconocido")))
         else:
             for u in listar_solicitudes():
-                dgv.insert("", "end", values=(u.id_usuario,u.nombre,u.apellido,u.puesto,ESTADOS.get(u.activo, "Desconocido")))
+                dgv.insert("", "end", values=(u.id_usuario,u.nombre,u.apellido,u.email,u.puesto,ESTADOS.get(u.activo, "Desconocido")))
         actualizar_botones()
 
     def actualizar_botones():
@@ -239,6 +239,9 @@ def abrir_menu_admin(usuario, winlog):
         ctk.CTkLabel(frame_center, text="Apellido").pack(pady=5)
         entry_apellido = ctk.CTkEntry(frame_center); entry_apellido.insert(0,datos[2]); entry_apellido.pack(pady=5)
 
+        ctk.CTkLabel(frame_center, text="Apellido").pack(pady=5)
+        entry_email = ctk.CTkEntry(frame_center); entry_email.insert(0,datos[2]); entry_email.pack(pady=5)
+
         ctk.CTkLabel(frame_center, text="Puesto").pack(pady=5)
         combo_puesto = ctk.CTkComboBox(frame_center, values=["admin","operario","supervisor"])
         combo_puesto.set(datos[3]); combo_puesto.pack(pady=5)
@@ -246,7 +249,7 @@ def abrir_menu_admin(usuario, winlog):
         def guardar():
             modificar_usuario(datos[0], entry_nombre.get(), entry_apellido.get(), combo_puesto.get())
             messagebox.showinfo("Éxito","Usuario actualizado")
-            registrar(usuario, "Modificacion a un Usuario.")
+            registrar(usuario, "Modificacion a un Usuario.","USERS")
             mini.destroy()
             cargar_datos()
 
@@ -281,7 +284,7 @@ def abrir_menu_admin(usuario, winlog):
                 resultados = buscar_por_apellido(apellido)
                 if resultados:
                     for u in resultados:
-                        dgv.insert("", "end", values=(u.id_usuario, u.nombre, u.apellido, u.puesto, ESTADOS.get(u.activo, "Desconocido")))
+                        dgv.insert("", "end", values=(u.id_usuario, u.nombre, u.apellido, u.email, u.puesto, ESTADOS.get(u.activo, "Desconocido")))
                 else:
                     messagebox.showinfo("Resultado", "No se encontraron usuarios con ese apellido.")
                 mini.destroy()
@@ -293,28 +296,28 @@ def abrir_menu_admin(usuario, winlog):
         datos = get_sel()
         if datos:
             baja_usuario(datos[0])
-            registrar(usuario, "Se dio de baja un usuario.") 
+            registrar(usuario, "Se dio de baja un usuario.","USERS") 
             cargar_datos()
 
     def alta():
         datos = get_sel()
         if datos:
             alta_usuario(datos[0])
-            registrar(usuario, "Se dio de alta un usuario.")
+            registrar(usuario, "Se dio de alta un usuario.","USERS")
             cargar_datos()
 
     def aprobar():
         datos = get_sel()
         if datos:
             aprobar_usuario(datos[0])
-            registrar(usuario, "Solicitud aprobada.")
+            registrar(usuario, "Solicitud aprobada.","USERS")
             cargar_datos()
 
     def rechazar():
         datos = get_sel()
         if datos:
             rechazar_usuario(datos[0])
-            registrar(usuario, "Solicitud rechazada.")
+            registrar(usuario, "Solicitud rechazada.","USERS")
             cargar_datos()
     
     def mostrar_gestion_logs():

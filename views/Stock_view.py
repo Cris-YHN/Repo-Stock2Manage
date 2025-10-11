@@ -2,6 +2,7 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from assets.Themes import themes
+from controllers.LogsController import registrar # registrar(usuario, "Error al Logearse.")
 from controllers.MaterialControllers import (
     listar_materiales, listar_materiales_activos, listar_materiales_inactivos, listar_materiales_escasos,
     buscar_nombre, crear_material, modificar_material,
@@ -12,7 +13,7 @@ from controllers.ProveedorControllers import listar_proveedores
 from entities.RemitosEntity import RemitoDetalle
 import datetime
 
-def gestion_stock(parent_frame):
+def gestion_stock(parent_frame, usuario):
     colors = themes.get_colors()
     
     # limpiar
@@ -185,6 +186,7 @@ def gestion_stock(parent_frame):
             if not any(p.id_proveedor == prov for p in listar_proveedores()):
                 messagebox.showerror("Error", "Proveedor inexistente"); return
             crear_material(nombre, prov)
+            registrar(usuario, "Material agregado correctamente.", "STOCK")
             cargar_datos(); mini.destroy()
         ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=10)
 
@@ -209,6 +211,7 @@ def gestion_stock(parent_frame):
             try:
                 modificar_material(int(datos[0]), e_nom.get(),
                                    int(e_stock.get()), int(e_prov.get()))
+                registrar(usuario, "Material modificado correctamente.", "STOCK")
                 cargar_datos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
@@ -218,11 +221,13 @@ def gestion_stock(parent_frame):
         datos = get_sel()
         if datos and messagebox.askyesno("Confirmación","¿Dar de baja?"):
             baja_material(int(datos[0])); cargar_datos()
+            registrar(usuario, "Material fue dado de baja.", "STOCK")
 
     def alta_mat():
         datos = get_sel()
         if datos and messagebox.askyesno("Confirmación","¿Dar de alta?"):
             alta_material(int(datos[0])); cargar_datos()
+            registrar(usuario, "Material fue dado de alta.", "STOCK")
 
     def cargar_remito_view():
         mini = ctk.CTkToplevel(main)
@@ -264,6 +269,7 @@ def gestion_stock(parent_frame):
                     Carga_Materiales_delRemito(int(e_id.get()), int(e_qty.get()))
                 crear_remito(datetime.date.today().strftime("%Y-%m-%d"), idp, detalles)
                 messagebox.showinfo("Éxito","Remito cargado")
+                registrar(usuario, "Remito creado con exito.", "REMITO")
                 cargar_datos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))

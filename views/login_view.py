@@ -2,7 +2,7 @@ import customtkinter as ctk
 from PIL import Image, ImageTk
 from tkinter import messagebox
 from controllers.UsuarioControllers import registrar_usuario, login_usuario
-from controllers.LogsController import registrar # registrar(usuario, "Error al Logearse.")
+from controllers.LogsController import registrar as registrolog # registrar(usuario, "Error al Logearse.")
 from views.Menu_Admin_view import abrir_menu_admin
 from views.Menu_Operario_view import abrir_menu_operario
 from views.Menu_Supervisor_view import abrir_menu_supervisor
@@ -75,16 +75,25 @@ def ventana_login():
             if usuario:
                 if usuario.activo == 0:
                     messagebox.showerror("Acceso denegado", "Tu usuario está inactivo. Contacta al administrador.")
-                    registrar(usuario, "Error al Logearse.")
+                    registrolog(usuario, "Error al Logearse.", "LOGIN")
                     return
 
                 messagebox.showinfo("Bienvenido", f"Hola {usuario.nombre} {usuario.apellido}")
-                registrar(usuario, "Se logeo con exito.")
+                registrolog(usuario, "Se logeo con exito.", "LOGIN")
 
                 winlog.withdraw()
 
                 if usuario.puesto == "admin":
-                    abrir_menu_admin(usuario,winlog)
+                    print("✅ Login correcto, usuario:", usuario.puesto)
+                    try:
+                        from views.Menu_Admin_view import abrir_menu_admin
+                        print("→ Import de abrir_menu_admin OK")
+                        abrir_menu_admin(usuario, winlog)
+                        print("→ abrir_menu_admin ejecutado")
+                    except Exception as e:
+                        import traceback
+                        traceback.print_exc()
+                        messagebox.showerror("Error al abrir menú", str(e))
                 elif usuario.puesto == "operario":
                     abrir_menu_operario(usuario, winlog)
                 elif usuario.puesto == "supervisor":
@@ -98,7 +107,7 @@ def ventana_login():
 
     def abrir_registro():
         colors = themes.get_colors()
-        reg = ctk.CTkToplevel(winlog)
+        reg = ctk.CTkToplevel(winlog); reg.transient(winlog); reg.grab_set()
         reg.title("Registro de Usuario")
         reg.geometry("400x400")
         reg.configure(fg_color=colors["BG"])
@@ -112,6 +121,9 @@ def ventana_login():
         ctk.CTkLabel(reg, text="Contraseña", text_color=colors["TEXT"]).pack(pady=5)
         entry_pass_reg = ctk.CTkEntry(reg, show="*", width=250); entry_pass_reg.pack(pady=5)
 
+        ctk.CTkLabel(reg, text="Email", text_color=colors["TEXT"]).pack(pady=5)
+        entry_email = ctk.CTkEntry(reg, width=250); entry_email.pack(pady=5)
+
         ctk.CTkLabel(reg, text="Puesto", text_color=colors["TEXT"]).pack(pady=5)
         combo_puesto = ctk.CTkComboBox(reg, values=["admin", "operario", "supervisor"], width=250)
         combo_puesto.set("admin")
@@ -122,11 +134,12 @@ def ventana_login():
                 nombre = entry_nombre.get().strip()
                 apellido = entry_apellido.get().strip()
                 contr = entry_pass_reg.get()
+                email = entry_email.get()
                 puesto = combo_puesto.get()
                 if nombre and apellido and contr:
-                    usuario = registrar_usuario(nombre, apellido, contr, puesto)
+                    usuario = registrar_usuario(nombre, apellido, contr, email, puesto)
                     messagebox.showinfo("Éxito", "Usuario registrado correctamente")
-                    registrar(usuario, "Error al Logearse.")
+                    registrolog(usuario, "Registro Satisfactorio", "REGISTRO")
                     reg.destroy()
                 else:
                     messagebox.showerror("Error", "Todos los campos son obligatorios")

@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from assets.Themes import themes
+from controllers.LogsController import registrar # registrar(usuario, "Error al Logearse.")
 from controllers.RemitosControllers import (
     listar_remitos, Buscar_remito_por_id,
     modificar_proveedor, listar_detalles_por_remito
@@ -11,7 +12,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 import os
 
-def gestion_remitos(parent_frame):
+def gestion_remitos(parent_frame,usuario):
     color = themes.get_colors()
 
     # limpiar
@@ -138,6 +139,7 @@ def gestion_remitos(parent_frame):
         def guardar():
             try:
                 modificar_proveedor(int(datos[0]), int(e_prov.get()))
+                registrar(usuario, "Modificacion de proveedor de Remito.", "REMITO")
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))

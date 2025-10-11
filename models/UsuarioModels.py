@@ -9,7 +9,7 @@ class UsuarioModel:
     def insertar(usuario: Usuario):
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute("""INSERT INTO usuarios (nombre, apellido, contrasenia, puesto, activo) VALUES (?, ?, ?, ?, ?)""", (usuario.nombre, usuario.apellido, usuario.contrasenia, usuario.puesto, usuario.activo))
+        cursor.execute("""INSERT INTO usuarios (nombre, apellido, contrasenia, email, puesto, activo) VALUES (?, ?, ?, ?, ?, ?)""", (usuario.nombre, usuario.apellido, usuario.contrasenia, usuario.email, usuario.puesto, usuario.activo))
         conn.commit()
         conn.close()
 
@@ -70,14 +70,14 @@ class UsuarioModel:
         conn.close()
 
     @staticmethod
-    def actualizar_usuario(id_usuario, nombre, apellido, puesto):
+    def actualizar_usuario(id_usuario, nombre, apellido, email, puesto):
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
             UPDATE usuarios 
-            SET nombre = ?, apellido = ?, puesto = ?
+            SET nombre = ?, apellido = ?, email = ?, puesto = ?
             WHERE id_usuario = ?
-        """, (nombre, apellido, puesto, id_usuario))
+        """, (nombre, apellido, email, puesto, id_usuario))
         conn.commit()
         conn.close()
 
@@ -115,7 +115,7 @@ class UsuarioModel:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id_usuario, nombre, apellido, contrasenia, puesto, activo
+            SELECT id_usuario, nombre, apellido, contrasenia, email, puesto, activo
             FROM usuarios
             WHERE apellido LIKE ?
         """, (f"%{apellido}%",))

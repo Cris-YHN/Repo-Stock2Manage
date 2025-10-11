@@ -10,7 +10,9 @@ def create_table_usuarios():
             nombre TEXT NOT NULL,
             apellido TEXT NOT NULL,
             contrasenia TEXT NOT NULL,
+            email TEXT NOT NULL,
             puesto TEXT NOT NULL,
+            codigohash TEXT,
             activo INTEGER DEFAULT 0,
             timestamp TEXT DEFAULT CURRENT_TIMESTAMP
         )"""

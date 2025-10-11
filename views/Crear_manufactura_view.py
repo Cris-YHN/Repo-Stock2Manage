@@ -1,10 +1,11 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from assets.Themes import themes
+from controllers.LogsController import registrar
 from controllers.ManufacturaControllers import (crear_manufactura, listar_manufactura, listar_pasos, Buscar_manufactura_por_nombre, modificar_manufactura, crear_paso,modificar_paso)
 from controllers.MaterialControllers import (verificar_existencia)
 
-def gestion_crear_manufactura(parent_frame):
+def gestion_crear_manufactura(parent_frame, usuario):
     colors = themes.get_colors()
     for w in parent_frame.winfo_children():
         w.destroy()
@@ -108,6 +109,7 @@ def gestion_crear_manufactura(parent_frame):
                 messagebox.showerror("Error", "Debe ingresar un nombre")
                 return
             crear_manufactura(nombre)
+            registrar(usuario, "Manufactura creada con exito.", "MANUF")
             cargar_todos()
             mini.destroy()
 
@@ -157,6 +159,7 @@ def gestion_crear_manufactura(parent_frame):
         def guardar():
             try:
                 modificar_manufactura(int(datos[0]), entry_nom.get())
+                registrar(usuario, "Manufactura modificada.", "MANUF")
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
@@ -260,7 +263,7 @@ def gestion_crear_manufactura(parent_frame):
                         # todos los materiales de esta carga comparten el mismo paso
                         crear_paso(id_manuf, nuevo_paso, id_material, cantidad)
 
-
+                    registrar(usuario, "Paso de manufactura creado con exito.", "MANUF")
                     cargar_pasos()
                     win.destroy()
                 except ValueError:
@@ -308,6 +311,7 @@ def gestion_crear_manufactura(parent_frame):
                     id_material = int(entry_mat.get())
                     cantidad = int(entry_cant.get())
                     modificar_paso(id_manuf, paso_nro, mat_original, id_material, cantidad)
+                    registrar(usuario, "Paso de manufactura modificado.", "MANUF")
                     cargar_pasos()
                     win.destroy()
                 except ValueError:

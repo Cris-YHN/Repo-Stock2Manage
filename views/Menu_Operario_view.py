@@ -2,6 +2,7 @@ import customtkinter as ctk
 from tkinter import messagebox
 from PIL import Image
 from assets.Themes import themes
+from controllers.LogsController import registrar
 from controllers.ManufacturaControllers import listar_pasos
 from controllers.MaterialControllers import uso_material
 
@@ -132,6 +133,7 @@ def abrir_menu_operario(usuario, winlog):
                 uso_material(m.cantidad_necesaria, m.id_material)
 
             messagebox.showinfo("Procesado", f"Se procesó Paso {paso_num} con {len(materiales_del_paso)} materiales.")
+            registrar(usuario, "Se proceso la manufactura con exito.", "MANUFAC")
 
         ctk.CTkButton(frame, text="Procesar Paso",
                     fg_color=colors["BUTTON"],

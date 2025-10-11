@@ -1,13 +1,14 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from assets.Themes import themes
+from controllers.LogsController import registrar
 from controllers.CPControllers import Buscar_proveedor_por_nombre, listar_cp
 from controllers.ProveedorControllers import (
     listar_proveedores, Buscar_proveedor_por_id,
     crear_proveedor, modificar_proveedor
 )
 
-def gestion_proveedores(parent_frame):
+def gestion_proveedores(parent_frame, usuario):
     colors = themes.get_colors()
 
     for w in parent_frame.winfo_children():
@@ -137,6 +138,7 @@ def gestion_proveedores(parent_frame):
                 crear_proveedor(entries["Nombre"].get(), entries["Codigo Postal"].get(),
                                 entries["Calle"].get(), entries["Numero"].get(),
                                 entries["Telefono"].get())
+                registrar(usuario, "Nuevo Proveedor creado con exito.", "PROVEEDOR")
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
@@ -168,6 +170,7 @@ def gestion_proveedores(parent_frame):
                     entries["Numero"].get(),
                     entries["Telefono"].get()
                 )
+                registrar(usuario, "Modificacion de proveedor.", "PROVEEDOR")
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))

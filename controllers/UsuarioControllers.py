@@ -1,9 +1,9 @@
 from models.UsuarioModels import UsuarioModel
 from entities.UsuarioEntity import Usuario
 
-def registrar_usuario(nombre, apellido, contrasenia, puesto):
+def registrar_usuario(nombre, apellido, contrasenia, email, puesto):
     contr_hashed = UsuarioModel.hash_password(contrasenia)
-    usuario = Usuario(nombre=nombre, apellido=apellido, contrasenia=contr_hashed, puesto=puesto, activo=0)
+    usuario = Usuario(nombre=nombre, apellido=apellido, contrasenia=contr_hashed, email=email, puesto=puesto, activo=0)
     UsuarioModel.insertar(usuario)
     return usuario
 
@@ -38,8 +38,8 @@ def baja_usuario(id_usuario):
 def alta_usuario(id_usuario):
     UsuarioModel.cambiar_estado_usuario(id_usuario, 1)
 
-def modificar_usuario(id_usuario, nombre, apellido, puesto):
-    UsuarioModel.actualizar_usuario(id_usuario, nombre, apellido, puesto)
+def modificar_usuario(id_usuario, nombre, apellido, email, puesto):
+    UsuarioModel.actualizar_usuario(id_usuario, nombre, apellido, email, puesto)
 
 def buscar_por_apellido(apellido: str):
     return UsuarioModel.buscar_por_apellido(apellido)

@@ -71,19 +71,19 @@ def abrir_menu_supervisor(usuario, winlog):
 
     def mostrar_gestion_stock():
         limpiar_contenedor()
-        gestion_stock(contenedor) 
+        gestion_stock(contenedor, usuario) 
 
     def mostrar_gestion_proveedor():
         limpiar_contenedor()
-        gestion_proveedores(contenedor) 
+        gestion_proveedores(contenedor, usuario) 
 
     def mostrar_gestion_remitos():
         limpiar_contenedor()
-        gestion_remitos(contenedor) 
+        gestion_remitos(contenedor, usuario) 
 
     def mostrar_gestion_manufactura():
         limpiar_contenedor()
-        gestion_crear_manufactura(contenedor)
+        gestion_crear_manufactura(contenedor, usuario)
     
     # Botones menú lateral
     btn_inicio = ctk.CTkButton(menu_lateral, text="Inicio",

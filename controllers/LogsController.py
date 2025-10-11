@@ -2,7 +2,7 @@ from models.LogsModels import LogsModel
 from entities.LogsEntity import logs
 import socket
 
-def registrar(usuario, accion, nivel="INFO"):
+def registrar(usuario, accion, nivel):
     if not isinstance(usuario, str):
         try:
             usuario = usuario.nombre  # o usuario.username según tu entidad
