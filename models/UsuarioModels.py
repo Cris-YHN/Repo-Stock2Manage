@@ -197,10 +197,12 @@ class UsuarioModel:
             WHERE id_usuario = ?
         """, (intentos, hoy, id_usuario))
 
+        
         # Si superó el límite, bloquear
         if intentos >= 5:
             cursor.execute("UPDATE usuarios SET activo = 0 WHERE id_usuario = ?", (id_usuario,))
             print(f"🚫 Usuario {id_usuario} bloqueado por 5 intentos fallidos hoy")
+            
 
         conn.commit()
         conn.close()

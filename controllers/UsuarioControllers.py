@@ -11,8 +11,6 @@ def login_usuario(id, contrasenia):
     usuario = UsuarioModel.obtener_por_id(id)
     if not usuario:
         return None
-    if usuario.activo == 0:
-        return None
     if usuario and UsuarioModel.check_password(contrasenia, usuario.contrasenia):
         UsuarioModel.resetear_intentos(id)
         return usuario

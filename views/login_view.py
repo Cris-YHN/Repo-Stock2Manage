@@ -68,38 +68,47 @@ def ventana_login():
         try:
             user_id = int(entry_id.get().strip())
             password = entry_pass.get()
+
+            # Intentar loguearse
             usuario = login_usuario(user_id, password)
+
+            # Si se devuelve un usuario válido
             if usuario:
+                # Si el usuario está inactivo, no permitir acceso
+                if usuario.intentos_fallidos >= 5:
+                        messagebox.showerror("Cuenta bloqueada", "Tu cuenta fue bloqueada por 5 intentos fallidos. Contacta al administrador.")
+                        registrolog(usuario, "Cuenta bloqueada por varios ingresos erroneos.", "LOGIN")
+                        return
+                
                 if usuario.activo == 0:
                     messagebox.showerror("Acceso denegado", "Tu usuario está inactivo. Contacta al administrador.")
-                    registrolog(usuario, "Error al Logearse.", "LOGIN")
+                    registrolog(usuario, "Intento de acceso con usuario inactivo.", "LOGIN")
                     return
 
+                # Login correcto
                 messagebox.showinfo("Bienvenido", f"Hola {usuario.nombre} {usuario.apellido}")
-                registrolog(usuario, "Se logeo con exito.", "LOGIN")
+                registrolog(usuario, "Se logueó con éxito.", "LOGIN")
 
-                winlog.withdraw()
-                print("aca deberia pasar")
+                winlog.withdraw()  # Oculta ventana login
 
+                # Abrir menú según el rol
                 if usuario.puesto == "admin":
-                    print("aca es lujo")
                     abrir_menu_admin(usuario, winlog)
                 elif usuario.puesto == "operario":
                     abrir_menu_operario(usuario, winlog)
                 elif usuario.puesto == "supervisor":
-                    abrir_menu_supervisor(usuario,winlog)
-            else:
-                check_user = obtener_usuario_por_id(user_id)
-                if check_user and check_user.activo == 0:
-                    registrolog(usuario, "Cinco Intentos de acceso erroneos.", "LOGIN")
-                    messagebox.showerror("Cuenta bloqueada", "Tu cuenta fue bloqueada por 5 intentos fallidos hoy. Contacta al administrador.")
+                    abrir_menu_supervisor(usuario, winlog)
                 else:
-                    messagebox.showerror("Error", "Credenciales inválidas.")
-                return
+                    messagebox.showerror("Error", "Puesto no reconocido para este usuario.")
+                    winlog.deiconify()
+            else: 
+                messagebox.showerror("Error", "Credenciales incorrectas.")
+
         except ValueError:
-            messagebox.showerror("Error", "El ID debe ser un número")
+            messagebox.showerror("Error", "El ID debe ser un número.")
         except Exception as e:
             messagebox.showerror("Error", f"Ocurrió un problema: {e}")
+
     
     # Funcion de Ventana Registro
     def abrir_registro():
