@@ -8,8 +8,8 @@ def crear_remito(fecha, idprov, detalles):  #para la funcion dentro de stock_vie
 def listar_remitos():
     return RemitoModel.obtener_todos()
 
-def Buscar_remito_por_id(idrem):
-    return RemitoModel.obtener_por_ID(idrem)
+def buscar_remitos_por_fecha(patron_fecha):
+    return RemitoModel.obtener_remitos_por_fecha(patron_fecha)
 
 def modificar_proveedor(id_remito, Id_proveedor):
     RemitoModel.actualizar_proveedor(id_remito, Id_proveedor)

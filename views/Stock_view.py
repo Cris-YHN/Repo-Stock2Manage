@@ -1,8 +1,7 @@
-# views/nuevo_stock.py
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from assets.Themes import themes
-from controllers.LogsController import registrar # registrar(usuario, "Error al Logearse.")
+from controllers.LogsController import registrar 
 from controllers.MaterialControllers import (
     listar_materiales, listar_materiales_activos, listar_materiales_inactivos, listar_materiales_escasos,
     buscar_nombre, crear_material, modificar_material,
@@ -13,15 +12,16 @@ from controllers.ProveedorControllers import listar_proveedores
 from entities.RemitosEntity import RemitoDetalle
 import datetime
 
-def gestion_stock(parent_frame, usuario):
+# Funcion de gestion Stock
+def gestion_stock(contenedor, usuario):
     colors = themes.get_colors()
     
-    # limpiar
-    for w in parent_frame.winfo_children():
+    # limpiar contenedor
+    for w in contenedor.winfo_children():
         w.destroy()
 
     # marco principal
-    main = ctk.CTkFrame(parent_frame, fg_color=colors["BG"])
+    main = ctk.CTkFrame(contenedor, fg_color=colors["BG"])
     main.pack(fill="both", expand=True)
 
     # Combo filtro
@@ -33,13 +33,15 @@ def gestion_stock(parent_frame, usuario):
     filtro.set("Todos los Materiales")
     filtro.pack(pady=10)
 
+    # Creacion de frame del Treeview dentro del contenedor
     frame_tree = ctk.CTkFrame(main, fg_color=colors["FRAME"])
     frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
 
+    # Barras de Scroll para Treeview
     scrollbar_y = ctk.CTkScrollbar(frame_tree, orientation="vertical")
     scrollbar_y.pack(side="right", fill="y")
 
-    # Treeview oscuro
+    # Treeview
     style = ttk.Style()
     style.theme_use("clam")
     style.configure(
@@ -66,27 +68,23 @@ def gestion_stock(parent_frame, usuario):
     
     sort_state = {}
 
+    # Funcion para ordenamiento de mayor o menor de Columnas en Treeview
     def ordenar_por_columna(col):
-        # Obtiene todos los items actuales
-        datos = [(dgv.set(k, col), k) for k in dgv.get_children("")]
-            
-        # Intenta convertir a número si corresponde
-        try:
-            datos = [(float(v), k) for v, k in datos]
-        except ValueError:
-            pass  # si no es número, lo deja como texto
-            
-        # Alterna entre ascendente y descendente
-        reverse = sort_state.get(col, False)
-        datos.sort(reverse=reverse)
-            
-        # Reorganiza los items
-        for index, (_, k) in enumerate(datos):
-            dgv.move(k, "", index)
-            
-        # Guarda el nuevo estado de orden
-        sort_state[col] = not reverse
+            datos = [(dgv.set(k, col), k) for k in dgv.get_children("")] # Obtiene todos los items actuales
+            try:
+                datos = [(float(v), k) for v, k in datos]       # Intenta convertir a número si corresponde
+            except ValueError:
+                pass                                            # si no es número, lo deja como texto
 
+            reverse = sort_state.get(col, False)                # Alterna entre ascendente y descendente
+            datos.sort(reverse=reverse)
+
+            for index, (_, k) in enumerate(datos):              # Reorganiza los items
+                dgv.move(k, "", index)
+            
+            sort_state[col] = not reverse                       # Guarda el nuevo estado de orden
+    
+    # Inicializacion de datos y barra de scroll en Treeview
     columnas = ("ID","Nombre","Stock","ID Proveedor","Proveedor","Max Ingreso","Estado")
     dgv = ttk.Treeview(frame_tree, columns=columnas, show="headings", yscrollcommand=scrollbar_y.set)
     for col in columnas:
@@ -102,7 +100,7 @@ def gestion_stock(parent_frame, usuario):
         1: "Activo"
     }
 
-    # ---- Funciones de datos
+    # Funcion de cargar todos los datos dentro del Treeview
     def cargar_datos():
         dgv.delete(*dgv.get_children())
         sel = filtro.get()
@@ -121,14 +119,16 @@ def gestion_stock(parent_frame, usuario):
                 m.max_ingreso, ESTADOS.get(m.activo, "Desconocido")
             ))
 
-    # ---- CRUD Helpers
+    # Funcion de seleccionar registro
     def get_sel():
         sel = dgv.focus()
         if not sel:
-            messagebox.showwarning("Atención", "Seleccione un material")
+            messagebox.showwarning("Atención","Selecciona un usuario")
             return None
         return dgv.item(sel)["values"]
-
+    
+    # ***Funciones Internas***
+    # Funcion de Buscar Material por Nombre
     def buscar_nombre_view():
         mini = ctk.CTkToplevel(main)
         mini.title("Buscar por Nombre")
@@ -161,7 +161,8 @@ def gestion_stock(parent_frame, usuario):
             mini.destroy()
 
         ctk.CTkButton(frame_center, text="Buscar", fg_color=colors["BUTTON"], command=buscar).pack(pady=10)
-
+    
+    # Funcion de agregar material al Stock
     def agregar_mat():
         mini = ctk.CTkToplevel(main)
         mini.title("Nuevo Material"); mini.transient(main); mini.grab_set()
@@ -189,7 +190,8 @@ def gestion_stock(parent_frame, usuario):
             registrar(usuario, "Material agregado correctamente.", "STOCK")
             cargar_datos(); mini.destroy()
         ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=10)
-
+    
+    # Funcion de modificar datos de un material del stock
     def modificar_mat():
         datos = get_sel()
         if not datos: return
@@ -215,29 +217,60 @@ def gestion_stock(parent_frame, usuario):
                 cargar_datos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
+            except ValueError:
+                messagebox.showerror("Error", "Ingrese un número válido")
         ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=20)
-
+    
+    # Funcion para dar de baja algun material
     def baja_mat():
         datos = get_sel()
         if datos and messagebox.askyesno("Confirmación","¿Dar de baja?"):
             baja_material(int(datos[0])); cargar_datos()
             registrar(usuario, "Material fue dado de baja.", "STOCK")
 
+    # Funcion para dar de alta algun material que fue dado de baja
     def alta_mat():
         datos = get_sel()
         if datos and messagebox.askyesno("Confirmación","¿Dar de alta?"):
             alta_material(int(datos[0])); cargar_datos()
             registrar(usuario, "Material fue dado de alta.", "STOCK")
 
+    # Funcion para el armado de Remitos
     def cargar_remito_view():
         mini = ctk.CTkToplevel(main)
         mini.title("Cargar Remito"); mini.transient(main); mini.grab_set()
         mini.geometry("500x500")
         materiales = []
+        proveedor_valido = {"ok": False}
 
-        ctk.CTkLabel(mini, text="Proveedor").pack(pady=5)
-        e_prov = ctk.CTkEntry(mini); e_prov.pack(pady=5)
-        frame = ctk.CTkFrame(mini); frame.pack(pady=10)
+        frame_prov = ctk.CTkFrame(mini, fg_color="transparent")
+        frame_prov.pack(pady=10)
+
+        ctk.CTkLabel(frame_prov, text="ID Proveedor").grid(row=0, column=0, padx=5, pady=5)
+        e_prov = ctk.CTkEntry(frame_prov, width=150)
+        e_prov.grid(row=0, column=1, padx=5, pady=5)
+
+        def verificar_proveedor():
+            try:
+                idp = int(e_prov.get().strip())
+                proveedores = listar_proveedores()
+                prov = next((p for p in proveedores if p.id_proveedor == idp), None)
+                if prov:
+                    messagebox.showinfo("Proveedor encontrado", f"✅ {prov.nombre_proveedor} (ID: {prov.id_proveedor})")
+                    proveedor_valido["ok"] = True
+                else:
+                    messagebox.showerror("Error", "Proveedor inexistente")
+                    proveedor_valido["ok"] = False
+            except ValueError:
+                messagebox.showerror("Error", "Ingrese un número de proveedor válido")
+                proveedor_valido["ok"] = False
+
+        ctk.CTkButton(frame_prov, text="Verificar", fg_color=colors["BUTTON"],
+                    text_color=colors["BUTTON_TXT"], width=100,
+                    command=verificar_proveedor).grid(row=0, column=2, padx=5, pady=5)
+        
+        frame = ctk.CTkFrame(mini)
+        frame.pack(pady=10)
 
         def add_row():
             # si ya hay filas, exigir que la última no esté vacía
@@ -247,9 +280,13 @@ def gestion_stock(parent_frame, usuario):
                     messagebox.showwarning("Atención",
                                         "Complete el material anterior antes de agregar otro.")
                     return
-            row = ctk.CTkFrame(frame); row.pack(pady=5)
-            e_id = ctk.CTkEntry(row, width=60); e_id.grid(row=0, column=0, padx=5)
-            e_qty= ctk.CTkEntry(row, width=60); e_qty.grid(row=0, column=1, padx=5)
+            row = ctk.CTkFrame(frame, fg_color=colors["FRAME"], corner_radius=10)
+            row.pack(pady=8, padx=15, fill="x")
+            e_id = ctk.CTkEntry(row, width=100, placeholder_text="ID Material")
+            e_id.grid(row=0, column=0, padx=10, pady=5)
+
+            e_qty = ctk.CTkEntry(row, width=100, placeholder_text="Cantidad")
+            e_qty.grid(row=0, column=1, padx=10, pady=5)
             ctk.CTkButton(row, text="❌", width=20, fg_color="#ff4d4d",
                           command=lambda r=row: (materiales.remove((e_id,e_qty)), r.destroy())
             ).grid(row=0, column=2, padx=5)
@@ -258,8 +295,9 @@ def gestion_stock(parent_frame, usuario):
         def guardar():
             try:
                 idp = int(e_prov.get())
-                if not any(p.id_proveedor == idp for p in listar_proveedores()):
-                    messagebox.showerror("Error", "Proveedor inexistente"); return
+                if not proveedor_valido["ok"]:
+                    messagebox.showerror("Error", "Debe verificar el proveedor antes de continuar.")
+                    return
                 detalles = []
                 for e_id,e_qty in materiales:
                     detalles.append(RemitoDetalle(
@@ -274,19 +312,24 @@ def gestion_stock(parent_frame, usuario):
             except Exception as e:
                 messagebox.showerror("Error", str(e))
 
-        ctk.CTkButton(mini, text="Agregar Material", command=add_row).pack(pady=5)
-        ctk.CTkButton(mini, text="Guardar Remito", command=guardar).pack(pady=5)
-
-    # ---- Barra de botones
+        ctk.CTkButton(mini, text="Agregar Material", fg_color=colors["BUTTON"], command=add_row).pack(pady=5)
+        ctk.CTkButton(mini, text="Guardar Remito", fg_color=colors["BUTTON"], command=guardar).pack(pady=5)
+    
+    # Frame de botones
     frame_botones = ctk.CTkFrame(main, fg_color=colors["FRAME"])
     frame_botones.pack(fill="x", pady=5)
 
-    ctk.CTkButton(frame_botones, text="Buscar ID",   fg_color=colors["BUTTON"], command=buscar_nombre_view).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(frame_botones, text="Agregar",    fg_color=colors["BUTTON"], command=agregar_mat).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(frame_botones, text="Modificar",  fg_color=colors["BUTTON"], command=modificar_mat).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(frame_botones, text="Baja",       fg_color=colors["BUTTON"], command=baja_mat).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(frame_botones, text="Alta",       fg_color=colors["BUTTON"], command=alta_mat).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(frame_botones, text="Remito",     fg_color=colors["BUTTON"], command=cargar_remito_view).pack(side="left", padx=10, pady=10)
+    # Frame de centrar botones
+    botones_center = ctk.CTkFrame(frame_botones, fg_color="transparent")
+    botones_center.pack(anchor="center")
+
+    # Botones
+    ctk.CTkButton(botones_center, text="Buscar Nombre",   fg_color=colors["BUTTON"], command=buscar_nombre_view).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Agregar",    fg_color=colors["BUTTON"], command=agregar_mat).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Modificar",  fg_color=colors["BUTTON"], command=modificar_mat).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Baja",       fg_color=colors["BUTTON"], command=baja_mat).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Alta",       fg_color=colors["BUTTON"], command=alta_mat).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Remito",     fg_color=colors["BUTTON"], command=cargar_remito_view).pack(side="left", padx=10, pady=10)
 
     # inicial
     filtro.configure(command=lambda _: cargar_datos())

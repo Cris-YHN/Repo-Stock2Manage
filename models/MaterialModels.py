@@ -146,6 +146,7 @@ class MaterialModel:
         if row[0] < cantidad:
             conn.close()
             raise ValueError("Stock insuficiente para realizar el proceso.")
+            return
 
         # Descontar stock
         cursor.execute("""

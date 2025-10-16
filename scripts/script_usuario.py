@@ -1,8 +1,10 @@
 import sqlite3
 conn = sqlite3.connect("database/s2m.db")
-cur = conn.cursor()
-cur.execute("PRAGMA table_info(USUARIOS)")
-for row in cur.fetchall():
-    print(row)
-conn.close()
+cursor = conn.cursor()
 
+cursor.execute("ALTER TABLE usuarios ADD COLUMN intentos_fallidos INTEGER DEFAULT 0")
+cursor.execute("ALTER TABLE usuarios ADD COLUMN fecha_ultimo_intento TEXT")
+
+conn.commit()
+conn.close()
+print("Migración completada ✅")

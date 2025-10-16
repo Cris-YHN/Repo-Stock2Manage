@@ -38,13 +38,13 @@ class ProveedorModel:
         return [Proveedor(*row) for row in rows]
     
     @staticmethod
-    def obtener_por_ID(id):
+    def obtener_por_nombre(name):
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""SELECT pr.id_proveedor, pr.nombre_proveedor, pr.codigo_postal,
         cp.provincia, cp.ciudad, pr.calle, pr.numero, pr.telefono
         FROM proveedores pr LEFT JOIN codigos_postales cp ON pr.codigo_postal = cp.codigo_postal 
-        WHERE id_proveedor = ?""", (id,))
+        WHERE pr.nombre_proveedor LIKE ?""", (f"%{name}%",))
         rows = cursor.fetchall()
         conn.close()
         return [Proveedor(*row) for row in rows]

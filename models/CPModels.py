@@ -18,7 +18,7 @@ class CodePostalModel:
     def Obtener_por_nombre(ciudad):
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM codigos_postales WHERE ciudad = ?", (f"%{ciudad}%"))
+        cursor.execute("SELECT * FROM codigos_postales WHERE ciudad LIKE ?", (f"%{ciudad}%",))
         rows = cursor.fetchall()
         conn.close()
         if rows:

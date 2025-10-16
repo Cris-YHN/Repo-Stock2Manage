@@ -8,7 +8,7 @@ def mostrar_logs(contenedor):
     for widget in contenedor.winfo_children():
         widget.destroy()
 
-    # Obtener colores actuales del tema
+    # Setear colores
     colors = themes.get_colors()
 
     # Frame principal

@@ -5,17 +5,22 @@ from controllers.LogsController import registrar
 from controllers.ManufacturaControllers import (crear_manufactura, listar_manufactura, listar_pasos, Buscar_manufactura_por_nombre, modificar_manufactura, crear_paso,modificar_paso)
 from controllers.MaterialControllers import (verificar_existencia)
 
-def gestion_crear_manufactura(parent_frame, usuario):
-    colors = themes.get_colors()
-    for w in parent_frame.winfo_children():
+def gestion_crear_manufactura(contenedor, usuario):
+    colors = themes.get_colors()             # Setear colores
+
+    # limpiar contenedor
+    for w in contenedor.winfo_children():
         w.destroy()
     
-    main = ctk.CTkFrame(parent_frame, fg_color=colors["BG"])
+    # marco principal
+    main = ctk.CTkFrame(contenedor, fg_color=colors["BG"])
     main.pack(fill="both", expand=True)
 
+    # Creacion de frame del Treeview dentro del contenedor
     frame_tree = ctk.CTkFrame(main, fg_color=colors["FRAME"])
     frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
 
+    # Barras de Scroll para Treeview
     scrollbar_y = ctk.CTkScrollbar(frame_tree, orientation="vertical")
     scrollbar_y.pack(side="right", fill="y")
 
@@ -46,29 +51,23 @@ def gestion_crear_manufactura(parent_frame, usuario):
     
     sort_state = {}
 
+    # Funcion para ordenamiento de mayor o menor de Columnas en Treeview
     def ordenar_por_columna(col):
-        # Obtiene todos los items actuales
-        datos = [(dgv.set(k, col), k) for k in dgv.get_children("")]
-            
-        # Intenta convertir a número si corresponde
-        try:
-            datos = [(float(v), k) for v, k in datos]
-        except ValueError:
-            pass  # si no es número, lo deja como texto
-            
-        # Alterna entre ascendente y descendente
-        reverse = sort_state.get(col, False)
-        datos.sort(reverse=reverse)
-            
-        # Reorganiza los items
-        for index, (_, k) in enumerate(datos):
-            dgv.move(k, "", index)
-            
-        # Guarda el nuevo estado de orden
-        sort_state[col] = not reverse
+            datos = [(dgv.set(k, col), k) for k in dgv.get_children("")] # Obtiene todos los items actuales
+            try:
+                datos = [(float(v), k) for v, k in datos]       # Intenta convertir a número si corresponde
+            except ValueError:
+                pass                                            # si no es número, lo deja como texto
 
+            reverse = sort_state.get(col, False)                # Alterna entre ascendente y descendente
+            datos.sort(reverse=reverse)
 
-    # Setear columnas
+            for index, (_, k) in enumerate(datos):              # Reorganiza los items
+                dgv.move(k, "", index)
+            
+            sort_state[col] = not reverse                       # Guarda el nuevo estado de orden
+    
+    # Inicializacion de datos y barra de scroll en Treeview
     dgv = ttk.Treeview(frame_tree, columns=("ID", "Nombre"), show="headings", yscrollcommand=scrollbar_y.set)
     for col in ("ID", "Nombre"):
         dgv.heading(col, text=col, command=lambda c=col: ordenar_por_columna(c))
@@ -77,18 +76,22 @@ def gestion_crear_manufactura(parent_frame, usuario):
 
     scrollbar_y.configure(command=dgv.yview)
 
+    # Funcion de cargar todos los datos dentro del Treeview
     def cargar_todos():
         dgv.delete(*dgv.get_children())
         for r in listar_manufactura():
             dgv.insert("", "end", values=(r.id_manufactura, r.nombre))
     
+    # Funcion de seleccionar registro
     def get_sel():
         sel = dgv.focus()
         if not sel:
             messagebox.showwarning("Atención", "Seleccione una Manufactura")
             return None
         return dgv.item(sel)["values"]
-
+    
+    # ***Funciones Internas***
+    # Funcion de Crear nueva manufactura
     def agregar_manufactura():
         mini = ctk.CTkToplevel(main)
         mini.title("Nueva Manufactura")
@@ -115,6 +118,7 @@ def gestion_crear_manufactura(parent_frame, usuario):
 
         ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=10)
     
+    # Funcion de buscar manufactura por nombre
     def buscarXNombre():
         mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
         mini.title("Buscar Manufactura")
@@ -141,8 +145,8 @@ def gestion_crear_manufactura(parent_frame, usuario):
                 messagebox.showerror("Error", str(e))
             
         ctk.CTkButton(frame_center, text="Buscar", fg_color=colors["BUTTON"], command=go).pack(pady=10)
-
     
+    # Funcion de modificar datos de Manufactura
     def modificar():
         datos = get_sel()
         if not datos: return
@@ -165,6 +169,7 @@ def gestion_crear_manufactura(parent_frame, usuario):
                 messagebox.showerror("Error", str(e))
         ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=10)
     
+    # Funcion para la ventana para introducir 
     def ver_pasos():
         datos = get_sel()
         if not datos:
@@ -197,11 +202,12 @@ def gestion_crear_manufactura(parent_frame, usuario):
             for p in listar_pasos(id_manuf):
                 tree_pasos.insert("", "end",
                                 values=(p.id_paso, p.id_material, p.nombre, p.cantidad_necesaria))
-
-        # -------- Botones dentro de la ventana de pasos --------
+        
+        # Frame de botones
         btn_frame = ctk.CTkFrame(mini, fg_color=colors["FRAME"])
         btn_frame.pack(fill="x", pady=5)
 
+        # Funcion para agregar pasos a la manufactura
         def agregar_paso_view():
             win = ctk.CTkToplevel(mini)
             win.title("Agregar Paso")
@@ -209,13 +215,13 @@ def gestion_crear_manufactura(parent_frame, usuario):
             win.grab_set()
             win.geometry("400x350")
 
-            rows = []  # guarda (entry_id, entry_qty)
+            rows = []
 
             frame_rows = ctk.CTkFrame(win)
             frame_rows.pack(pady=10)
 
             def add_row():
-                # si ya hay filas, exigir que la última no esté vacía
+                # si ya hay filas, exige que la última no este vacia
                 if rows:
                     e_id_last, e_qty_last = rows[-1]
                     if not e_id_last.get().strip() or not e_qty_last.get().strip():
@@ -243,13 +249,12 @@ def gestion_crear_manufactura(parent_frame, usuario):
 
             def guardar_pasos():
                 try:
-                    # validar que la última fila no esté vacía
+                    # valida que la última fila no esté vacía
                     if rows and (not rows[-1][0].get().strip() or not rows[-1][1].get().strip()):
                         messagebox.showwarning("Atención",
                                             "Complete todos los campos antes de guardar.")
                         return
 
-                    # determinar el próximo número de paso una sola vez
                     pasos_existentes = listar_pasos(id_manuf)
                     nuevo_paso = max([p.id_paso for p in pasos_existentes], default=0) + 1
 
@@ -260,7 +265,6 @@ def gestion_crear_manufactura(parent_frame, usuario):
                             messagebox.showerror("Error", f"El material {id_material} no existe.")
                             return
 
-                        # todos los materiales de esta carga comparten el mismo paso
                         crear_paso(id_manuf, nuevo_paso, id_material, cantidad)
 
                     registrar(usuario, "Paso de manufactura creado con exito.", "MANUF")
@@ -277,7 +281,8 @@ def gestion_crear_manufactura(parent_frame, usuario):
 
             # Comienza con una fila inicial
             add_row()
-
+        
+        # Funcion de modificar datos de cada paso
         def modificar_paso_view():
             sel = tree_pasos.focus()
             if not sel:
@@ -322,20 +327,26 @@ def gestion_crear_manufactura(parent_frame, usuario):
 
         cargar_pasos()
 
+        # Botones de la ventana de pasos
         ctk.CTkButton(btn_frame, text="Agregar Paso", fg_color=colors["BUTTON"],
                     command=agregar_paso_view).pack(side="left", padx=10, pady=10)
         ctk.CTkButton(btn_frame, text="Modificar Paso", fg_color=colors["BUTTON"],
                     command=modificar_paso_view).pack(side="left", padx=10, pady=10)
-
-
-
-    # barra de botones
+    
+    # Frame de botones
     fb = ctk.CTkFrame(main, fg_color=colors["FRAME"])
     fb.pack(fill="x", pady=5)
-    ctk.CTkButton(fb, text="Ver Manufacturas", fg_color=colors["BUTTON"], command=cargar_todos).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Agregar Manufacturas", fg_color=colors["BUTTON"], command=agregar_manufactura).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Buscar Nombre", fg_color=colors["BUTTON"], command=buscarXNombre).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Modificar Manufactura", fg_color=colors["BUTTON"], command=modificar).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Ver Pasos", fg_color=colors["BUTTON"], command=ver_pasos).pack(side="left", padx=10, pady=10)
 
+    # Frame de centrar botones
+    botones_center = ctk.CTkFrame(fb, fg_color="transparent")
+    botones_center.pack(anchor="center")
+
+    # Botones
+    ctk.CTkButton(botones_center, text="Ver Manufacturas", fg_color=colors["BUTTON"], command=cargar_todos).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Agregar Manufacturas", fg_color=colors["BUTTON"], command=agregar_manufactura).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Buscar Nombre", fg_color=colors["BUTTON"], command=buscarXNombre).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Modificar Manufactura", fg_color=colors["BUTTON"], command=modificar).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Ver Pasos", fg_color=colors["BUTTON"], command=ver_pasos).pack(side="left", padx=10, pady=10)
+
+    # Inicial
     cargar_todos()

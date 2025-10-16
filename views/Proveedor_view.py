@@ -2,24 +2,28 @@ import customtkinter as ctk
 from tkinter import ttk, messagebox
 from assets.Themes import themes
 from controllers.LogsController import registrar
-from controllers.CPControllers import Buscar_proveedor_por_nombre, listar_cp
+from controllers.CPControllers import Buscar_cp_por_nombre, listar_cp
 from controllers.ProveedorControllers import (
-    listar_proveedores, Buscar_proveedor_por_id,
-    crear_proveedor, modificar_proveedor
-)
+    listar_proveedores, Buscar_proveedor_por_nombre,
+    crear_proveedor, modificar_proveedor)
 
-def gestion_proveedores(parent_frame, usuario):
+
+def gestion_proveedores(contenedor, usuario):
     colors = themes.get_colors()
-
-    for w in parent_frame.winfo_children():
+    
+    # limpiar contenedor
+    for w in contenedor.winfo_children():
         w.destroy()
 
-    main = ctk.CTkFrame(parent_frame, fg_color=colors["BG"])
+    # marco principal
+    main = ctk.CTkFrame(contenedor, fg_color=colors["BG"])
     main.pack(fill="both", expand=True)
 
+    # Creacion de frame del Treeview dentro del contenedor
     frame_tree = ctk.CTkFrame(main, fg_color=colors["FRAME"])
     frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
 
+    # Barras de Scroll para Treeview
     scrollbar_y = ctk.CTkScrollbar(frame_tree, orientation="vertical")
     scrollbar_y.pack(side="right", fill="y")
 
@@ -50,27 +54,23 @@ def gestion_proveedores(parent_frame, usuario):
     
     sort_state = {}
 
+    # Funcion para ordenamiento de mayor o menor de Columnas en Treeview
     def ordenar_por_columna(col):
-        # Obtiene todos los items actuales
-        datos = [(dgv.set(k, col), k) for k in dgv.get_children("")]
-            
-        # Intenta convertir a número si corresponde
-        try:
-            datos = [(float(v), k) for v, k in datos]
-        except ValueError:
-            pass  # si no es número, lo deja como texto
-            
-        # Alterna entre ascendente y descendente
-        reverse = sort_state.get(col, False)
-        datos.sort(reverse=reverse)
-            
-        # Reorganiza los items
-        for index, (_, k) in enumerate(datos):
-            dgv.move(k, "", index)
-            
-        # Guarda el nuevo estado de orden
-        sort_state[col] = not reverse
+            datos = [(dgv.set(k, col), k) for k in dgv.get_children("")] # Obtiene todos los items actuales
+            try:
+                datos = [(float(v), k) for v, k in datos]       # Intenta convertir a número si corresponde
+            except ValueError:
+                pass                                            # si no es número, lo deja como texto
 
+            reverse = sort_state.get(col, False)                # Alterna entre ascendente y descendente
+            datos.sort(reverse=reverse)
+
+            for index, (_, k) in enumerate(datos):              # Reorganiza los items
+                dgv.move(k, "", index)
+            
+            sort_state[col] = not reverse                       # Guarda el nuevo estado de orden
+
+    # Inicializacion de datos y barra de scroll en Treeview
     cols = ("ID","Nombre","Codigo Postal","Localidad","Provincia","Calle","Numero","Telefono")
     dgv = ttk.Treeview(frame_tree, columns=cols, show="headings", yscrollcommand=scrollbar_y.set)
     for col in cols:
@@ -80,6 +80,7 @@ def gestion_proveedores(parent_frame, usuario):
 
     scrollbar_y.configure(command=dgv.yview)
 
+    # Funcion de cargar todos los datos dentro del Treeview
     def cargar_todos():
         dgv.delete(*dgv.get_children())
         for p in listar_proveedores():
@@ -88,14 +89,17 @@ def gestion_proveedores(parent_frame, usuario):
                 p.localidad, p.provincia, p.calle, p.numero, p.telefono
             ))
 
+    # Funcion de seleccionar registro
     def get_sel():
         sel = dgv.focus()
         if not sel:
             messagebox.showwarning("Atención", "Seleccione un proveedor")
             return None
         return dgv.item(sel)["values"]
-
-    def buscarID():
+    
+    # ***Funciones Internas***
+    # Funcion de Buscar Proveedor por Nombre
+    def buscarNombre():
         mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
         mini.title("Buscar ID")
         mini.geometry("300x200")
@@ -103,14 +107,14 @@ def gestion_proveedores(parent_frame, usuario):
         frame_center = ctk.CTkFrame(mini, fg_color="transparent")
         frame_center.pack(expand=True)
 
-        ctk.CTkLabel(frame_center, text="ID Proveedor").pack(pady=5)
-        e = ctk.CTkEntry(frame_center); e.pack(pady=5)
+        ctk.CTkLabel(frame_center, text="Nombre de Proveedor").pack(pady=5)
+        entry_nombre = ctk.CTkEntry(frame_center); entry_nombre.pack(pady=5)
 
         def buscar():
             try:
-                pid = int(e.get())
+                nameprov = entry_nombre.get()
                 dgv.delete(*dgv.get_children())
-                for p in Buscar_proveedor_por_id(pid):
+                for p in Buscar_proveedor_por_nombre(nameprov):
                     dgv.insert("", "end", values=(
                         p.id_proveedor, p.nombre_proveedor, p.codigo_postal,
                         p.localidad, p.provincia, p.calle, p.numero, p.telefono
@@ -119,7 +123,8 @@ def gestion_proveedores(parent_frame, usuario):
             except Exception as ex:
                 messagebox.showerror("Error", str(ex))
         ctk.CTkButton(frame_center, text="Buscar", fg_color=colors["BUTTON"], command=buscar).pack(pady=10)
-
+    
+    # Funcion de agregar un proveedor
     def agregar_prov():
         mini = ctk.CTkToplevel(main); mini.transient(main); mini.grab_set()
         mini.title("Nuevo Proveedor")
@@ -143,7 +148,8 @@ def gestion_proveedores(parent_frame, usuario):
             except Exception as e:
                 messagebox.showerror("Error", str(e))
         ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=10)
-
+    
+    # Funcion de modificar datos de un proveedor
     def modificar_prov_view():
         datos = get_sel()
         if not datos: return
@@ -175,7 +181,8 @@ def gestion_proveedores(parent_frame, usuario):
             except Exception as e:
                 messagebox.showerror("Error", str(e))
         ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=15)
-
+    
+    # Funcion para ver los codigos postales existentes
     def ver_cp():
         mini = ctk.CTkToplevel(main)
         mini.transient(main)
@@ -219,7 +226,9 @@ def gestion_proveedores(parent_frame, usuario):
                             values=(cp.codigo_postal, cp.ciudad, cp.provincia, cp.pais))
 
         def buscar_ciudad():
-            win = ctk.CTkToplevel(mini); win.transient(mini); win.grab_set()
+            win = ctk.CTkToplevel(mini)
+            win.transient(mini)
+            win.grab_set()
             win.title("Buscar Ciudad")
             win.geometry("300x200")
 
@@ -232,7 +241,11 @@ def gestion_proveedores(parent_frame, usuario):
 
             def buscar():
                 dmini.delete(*dmini.get_children())
-                for cp in Buscar_proveedor_por_nombre(entry.get()):
+                try:
+                    city = entry.get()
+                except Exception as e:
+                    messagebox.showerror("Error", str(e))
+                for cp in Buscar_cp_por_nombre(city):
                     dmini.insert("", "end",
                                 values=(cp.codigo_postal, cp.ciudad, cp.provincia, cp.pais))
                 win.destroy()
@@ -246,16 +259,21 @@ def gestion_proveedores(parent_frame, usuario):
         ctk.CTkButton(fb, text="Buscar Ciudad", fg_color=colors["BUTTON"], command=buscar_ciudad).pack(side="left", padx=10, pady=10)
 
         cargar_all()
-
-
-
-    # barra
+    
+    # Frame de botones
     fb = ctk.CTkFrame(main, fg_color=colors["FRAME"])
     fb.pack(fill="x", pady=5)
-    ctk.CTkButton(fb, text="Ver Todos", fg_color=colors["BUTTON"], command=cargar_todos).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Buscar ID", fg_color=colors["BUTTON"], command=buscarID).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Agregar", fg_color=colors["BUTTON"], command=agregar_prov).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Modificar", fg_color=colors["BUTTON"], command=modificar_prov_view).pack(side="left", padx=10, pady=10)
-    ctk.CTkButton(fb, text="Ver Códigos Postales", fg_color=colors["BUTTON"], command=ver_cp).pack(side="left", padx=10, pady=10)
 
+    # Frame de centrar botones
+    botones_center = ctk.CTkFrame(fb, fg_color="transparent")
+    botones_center.pack(anchor="center")
+
+    # Botones
+    ctk.CTkButton(botones_center, text="Ver Todos", fg_color=colors["BUTTON"], command=cargar_todos).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Buscar Nombre", fg_color=colors["BUTTON"], command=buscarNombre).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Agregar", fg_color=colors["BUTTON"], command=agregar_prov).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Modificar", fg_color=colors["BUTTON"], command=modificar_prov_view).pack(side="left", padx=10, pady=10)
+    ctk.CTkButton(botones_center, text="Ver Códigos Postales", fg_color=colors["BUTTON"], command=ver_cp).pack(side="left", padx=10, pady=10)
+
+    # inicial
     cargar_todos()

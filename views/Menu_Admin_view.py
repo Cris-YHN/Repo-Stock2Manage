@@ -6,11 +6,10 @@ from controllers.LogsController import registrar
 from controllers.UsuarioControllers import (
     listar_usuarios, listar_activos, listar_inactivos, listar_solicitudes,
     modificar_usuario, baja_usuario, alta_usuario,
-    aprobar_usuario, rechazar_usuario, buscar_por_apellido
-)
+    aprobar_usuario, rechazar_usuario, buscar_por_apellido)
 from views.Logs_view import mostrar_logs
 
-# Funcion de utilidad para botones
+# Funcion para deshabilitar botones
 def set_button_state(btn, enabled: bool):
     colors = themes.get_colors()
     if enabled:
@@ -19,18 +18,20 @@ def set_button_state(btn, enabled: bool):
         btn.configure(state="disabled", fg_color=colors["BUTTON_OFF"], text_color=colors["BUTTON_TXT_OFF"])
 
 def abrir_menu_admin(usuario, winlog):
-    colors = themes.get_colors()
+    colors = themes.get_colors() # Setear Colores
+
+    # Creacion de ventana 
     menuadm = ctk.CTkToplevel(winlog)
     menuadm.state("zoomed")
     menuadm.geometry("1100x600")
-    menuadm.title("Panel Administrador")
+    menuadm.title("Menú Administrador")
     menuadm.configure(fg_color=colors["BG"])
 
-    # Panel superior (verde)
+    # Panel Superior
     top_panel = ctk.CTkFrame(menuadm, fg_color=colors["TOP"], height=60)
     top_panel.pack(fill="x")
 
-    lbl_titulo = ctk.CTkLabel(top_panel, text="Panel Administrador",
+    lbl_titulo = ctk.CTkLabel(top_panel, text="Menú Administrador",
                               font=("Arial", 20, "bold"), text_color=colors["BUTTON_TXT"])
     lbl_titulo.pack(side="left", padx=20)
 
@@ -38,18 +39,18 @@ def abrir_menu_admin(usuario, winlog):
                                font=("Arial", 16), text_color=colors["BUTTON_TXT"])
     lbl_usuario.pack(side="right", padx=20)
 
-    # Menú lateral (botones)
+    # Menú lateral (botones de gestion y salidas)
     menu_lateral = ctk.CTkFrame(menuadm, fg_color=colors["FRAME"], width=200)
     menu_lateral.pack(side="left", fill="y")
 
     ctk.CTkLabel(menu_lateral, text="Menú", text_color=colors["TEXT"],
                  font=("Arial",16,"bold")).pack(pady=15)
-
-    # contenedor principal
+    
+    # Contenedor principal (Donde se implementan las gestiones)
     contenedor = ctk.CTkFrame(menuadm, fg_color=colors["BG"])
     contenedor.pack(side="right", fill="both", expand=True)
 
-    # inicio con logo centrado
+    # Contenido de Inicio con logo centrado
     logo = ctk.CTkImage(light_image=Image.open("assets/images/logo.png"), size=(220,220))
     logo_label = ctk.CTkLabel(contenedor, image=logo, text="")
     logo_label.pack(expand=True)
@@ -60,45 +61,48 @@ def abrir_menu_admin(usuario, winlog):
     combo_filtro = None
     frame_botones = None
 
-    # Funciones
+    # Función para limpiar el contenido del contenedor
     def limpiar_contenedor():
         for widget in contenedor.winfo_children():
             widget.destroy()
-
-    # Para volver a inicio
+    
+    # Funcion de vista de Inicio
     def mostrar_inicio():
         limpiar_contenedor()
         logo_lbl = ctk.CTkLabel(contenedor, image=logo, text="")
         logo_lbl.pack(expand=True)
     
+    # Funcion para cerrar sesion y Salir del Sistema
     def cerrar_sesion():
-        menuadm.destroy()        # cierra el menú
-        winlog.deiconify()       # 🔥 vuelve a mostrar el login
+        menuadm.destroy()        # Cierra la ventana del menu
+        winlog.deiconify()       # Vuelve a mostrar la ventana de login
 
     def Salir_Programa():
-        menuadm.destroy()        # cierra el menú
-        winlog.deiconify()       # 🔥 vuelve a mostrar el login
-        winlog.destroy()
-
-    # Para ingresar al modo de gestion de usuarios
+        menuadm.destroy()        # Cierra la ventana del menu
+        winlog.deiconify()       # Vuelve a mostrar la ventana de login
+        winlog.destroy()         # Cierre de ventana de login y cierre exitoso del sistema
+    
+    # Funcion para ingresar a la gestion de Usuarios
     def mostrar_gestion_usuarios():
         nonlocal frame_gestion, dgv, combo_filtro, frame_botones
         limpiar_contenedor()
 
-        # Filtro arriba
+        # Filtro de vistas del Treeview (ComboBox)
         combo_filtro = ctk.CTkComboBox(contenedor,
                         values=["Todos los Usuarios","Usuarios Activos","Usuarios Inactivos","Solicitudes de Usuarios"],
                         width=250)
         combo_filtro.set("Todos los Usuarios")
         combo_filtro.pack(pady=10)
 
-        # Treeview
+        # Creacion de frame del Treeview dentro del contenedor
         frame_tree = ctk.CTkFrame(contenedor, fg_color=colors["FRAME"])
         frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
 
+        # Barras de Scroll para Treeview
         scrollbar_y = ctk.CTkScrollbar(frame_tree, orientation="vertical")
         scrollbar_y.pack(side="right", fill="y")
 
+        # Treeview
         style = ttk.Style()
         style.theme_use("clam")
         style.configure(
@@ -125,27 +129,23 @@ def abrir_menu_admin(usuario, winlog):
 
         sort_state = {}
 
+        # Funcion para ordenamiento de mayor o menor de Columnas en Treeview
         def ordenar_por_columna(col):
-            # Obtiene todos los items actuales
-            datos = [(dgv.set(k, col), k) for k in dgv.get_children("")]
-            
-            # Intenta convertir a número si corresponde
+            datos = [(dgv.set(k, col), k) for k in dgv.get_children("")] # Obtiene todos los items actuales
             try:
-                datos = [(float(v), k) for v, k in datos]
+                datos = [(float(v), k) for v, k in datos]       # Intenta convertir a número si corresponde
             except ValueError:
-                pass  # si no es número, lo deja como texto
-            
-            # Alterna entre ascendente y descendente
-            reverse = sort_state.get(col, False)
+                pass                                                  # si no es número, lo deja como texto
+
+            reverse = sort_state.get(col, False)                # Alterna entre ascendente y descendente
             datos.sort(reverse=reverse)
-            
-            # Reorganiza los items
-            for index, (_, k) in enumerate(datos):
+
+            for index, (_, k) in enumerate(datos):              # Reorganiza los items
                 dgv.move(k, "", index)
             
-            # Guarda el nuevo estado de orden
-            sort_state[col] = not reverse
-
+            sort_state[col] = not reverse                       # Guarda el nuevo estado de orden
+        
+        # Inicializacion de datos y barra de scroll en Treeview
         dgv = ttk.Treeview(frame_tree, columns=("ID","Nombre","Apellido","Email","Puesto","Estado"), show="headings", yscrollcommand=scrollbar_y.set)
         for col in ("ID","Nombre","Apellido","Email","Puesto","Estado"):
             dgv.heading(col, text=col, command=lambda c=col: ordenar_por_columna(c))
@@ -154,7 +154,7 @@ def abrir_menu_admin(usuario, winlog):
 
         scrollbar_y.configure(command=dgv.yview)
 
-        # Frame botones
+        # Frame de botones
         frame_botones = ctk.CTkFrame(contenedor, fg_color=colors["FRAME"])
         frame_botones.pack(fill="x", pady=5)
 
@@ -163,12 +163,12 @@ def abrir_menu_admin(usuario, winlog):
         botones_center.pack(anchor="center")
 
         # Botones
-        btn_buscar_apellido = ctk.CTkButton(botones_center, text="Buscar Apellido", command=buscar_apellido)
-        btn_modificar = ctk.CTkButton(botones_center, text="Modificar", command=modificar)
-        btn_baja      = ctk.CTkButton(botones_center, text="Dar Baja", command=baja)
-        btn_alta      = ctk.CTkButton(botones_center, text="Dar Alta", command=alta)
-        btn_aprobar   = ctk.CTkButton(botones_center, text="Aprobar", command=aprobar)
-        btn_rechazar  = ctk.CTkButton(botones_center, text="Rechazar", command=rechazar)
+        btn_buscar_apellido = ctk.CTkButton(botones_center, text="Buscar Apellido", fg_color=colors["BUTTON"], command=buscar_apellido)
+        btn_modificar = ctk.CTkButton(botones_center, text="Modificar",fg_color=colors["BUTTON"], command=modificar)
+        btn_baja      = ctk.CTkButton(botones_center, text="Dar Baja",fg_color=colors["BUTTON"], command=baja)
+        btn_alta      = ctk.CTkButton(botones_center, text="Dar Alta",fg_color=colors["BUTTON"], command=alta)
+        btn_aprobar   = ctk.CTkButton(botones_center, text="Aprobar",fg_color=colors["BUTTON"], command=aprobar)
+        btn_rechazar  = ctk.CTkButton(botones_center, text="Rechazar",fg_color=colors["BUTTON"], command=rechazar)
 
         for b in (btn_buscar_apellido, btn_modificar, btn_baja, btn_alta, btn_aprobar, btn_rechazar):
             b.pack(side="left", padx=5)
@@ -183,7 +183,7 @@ def abrir_menu_admin(usuario, winlog):
 
         cargar_datos()
         combo_filtro.configure(command=lambda _:cargar_datos())
-
+    
     # Diccionario de estados
     ESTADOS = {
         0: "En solicitud",
@@ -191,6 +191,7 @@ def abrir_menu_admin(usuario, winlog):
         2: "Inactivo"
     }
 
+    # Funcion de cargar todos los datos dentro del Treeview
     def cargar_datos():
         dgv.delete(*dgv.get_children())
         sel = combo_filtro.get()
@@ -207,7 +208,8 @@ def abrir_menu_admin(usuario, winlog):
             for u in listar_solicitudes():
                 dgv.insert("", "end", values=(u.id_usuario,u.nombre,u.apellido,u.email,u.puesto,ESTADOS.get(u.activo, "Desconocido")))
         actualizar_botones()
-
+    
+    # Funcion para deshabilitar y habilitar botones dependiendo de la vista
     def actualizar_botones():
         sel = combo_filtro.get()
         set_button_state(frame_botones.btn_modificar, sel=="Usuarios Activos")
@@ -215,62 +217,74 @@ def abrir_menu_admin(usuario, winlog):
         set_button_state(frame_botones.btn_alta,      sel=="Usuarios Inactivos")
         set_button_state(frame_botones.btn_aprobar,   sel=="Solicitudes de Usuarios")
         set_button_state(frame_botones.btn_rechazar,  sel=="Solicitudes de Usuarios")
-
+    
+    # Funcion de seleccionar registro
     def get_sel():
         sel = dgv.focus()
         if not sel:
             messagebox.showwarning("Atención","Selecciona un usuario")
             return None
         return dgv.item(sel)["values"]
-
+    
+    # Funcion de modificar datos de Usuarios
     def modificar():
-        datos = get_sel()
+        datos = get_sel()           # Revisa que se haya seleccionado un registro
         if not datos: return
-        mini = ctk.CTkToplevel(menuadm); mini.transient(menuadm); mini.grab_set()
+
+        # Creacion de mini ventana
+        mini = ctk.CTkToplevel(menuadm)
+        mini.transient(menuadm)
+        mini.grab_set()
         mini.title("Modificar Usuario")
         mini.geometry("400x350")
 
+        # Frame para centrar Entries y Labels
         frame_center = ctk.CTkFrame(mini, fg_color="transparent")
         frame_center.pack(expand=True)
 
+        # Entries, Labels y ComboBox
         ctk.CTkLabel(frame_center, text="Nombre").pack(pady=5)
         entry_nombre = ctk.CTkEntry(frame_center); entry_nombre.insert(0,datos[1]); entry_nombre.pack(pady=5)
 
         ctk.CTkLabel(frame_center, text="Apellido").pack(pady=5)
         entry_apellido = ctk.CTkEntry(frame_center); entry_apellido.insert(0,datos[2]); entry_apellido.pack(pady=5)
 
-        ctk.CTkLabel(frame_center, text="Apellido").pack(pady=5)
-        entry_email = ctk.CTkEntry(frame_center); entry_email.insert(0,datos[2]); entry_email.pack(pady=5)
+        ctk.CTkLabel(frame_center, text="Email").pack(pady=5)
+        entry_email = ctk.CTkEntry(frame_center); entry_email.insert(0,datos[3]); entry_email.pack(pady=5)
 
         ctk.CTkLabel(frame_center, text="Puesto").pack(pady=5)
         combo_puesto = ctk.CTkComboBox(frame_center, values=["admin","operario","supervisor"])
-        combo_puesto.set(datos[3]); combo_puesto.pack(pady=5)
+        combo_puesto.set(datos[4]); combo_puesto.pack(pady=5)
 
+        # Funcion para guardar la modificacion
         def guardar():
-            modificar_usuario(datos[0], entry_nombre.get(), entry_apellido.get(), combo_puesto.get())
+            modificar_usuario(datos[0], entry_nombre.get(), entry_apellido.get(),entry_email.get(), combo_puesto.get())
             messagebox.showinfo("Éxito","Usuario actualizado")
             registrar(usuario, "Modificacion a un Usuario.","USERS")
             mini.destroy()
             cargar_datos()
 
+        # Botones de mini ventana
         ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=20)
-
+    
     def buscar_apellido():
         # Ventana emergente para ingresar apellido
         mini = ctk.CTkToplevel(menuadm); mini.transient(menuadm); mini.grab_set()
         mini.title("Buscar por Apellido")
         mini.geometry("300x200")
+        mini.transient(menuadm)
+        mini.grab_set()         
 
-        mini.transient(menuadm)  # se asocia a la ventana padre
-        mini.grab_set()          # bloquea interacción con el padre
-
+        # Frame para centrar Entries y Labels
         frame_center = ctk.CTkFrame(mini, fg_color="transparent")
         frame_center.pack(expand=True)
 
+        # Entrada de dato
         ctk.CTkLabel(frame_center, text="Apellido:").pack(pady=5)
         entry_ap = ctk.CTkEntry(frame_center, width=200)
         entry_ap.pack(pady=5)
 
+        # Funcion de Busqueda
         def search():
             try:
                 apellido = entry_ap.get().strip()
@@ -289,9 +303,10 @@ def abrir_menu_admin(usuario, winlog):
                     messagebox.showinfo("Resultado", "No se encontraron usuarios con ese apellido.")
                 mini.destroy()
 
+        # Botones de mini ventana
         ctk.CTkButton(frame_center, text="Buscar", fg_color=colors["BUTTON"], command=search).pack(pady=10)
-
-
+    
+    # Funcion de Baja de Usuario
     def baja():
         datos = get_sel()
         if datos:
@@ -299,6 +314,7 @@ def abrir_menu_admin(usuario, winlog):
             registrar(usuario, "Se dio de baja un usuario.","USERS") 
             cargar_datos()
 
+    # Funcion de Alta de Usuario
     def alta():
         datos = get_sel()
         if datos:
@@ -306,6 +322,7 @@ def abrir_menu_admin(usuario, winlog):
             registrar(usuario, "Se dio de alta un usuario.","USERS")
             cargar_datos()
 
+    # Funcion de Aprobacion de Solicitud de Usuario
     def aprobar():
         datos = get_sel()
         if datos:
@@ -313,6 +330,7 @@ def abrir_menu_admin(usuario, winlog):
             registrar(usuario, "Solicitud aprobada.","USERS")
             cargar_datos()
 
+    # Funcion de Rechazo de Solicitud de Usuario (Borra su existencia de la BD)
     def rechazar():
         datos = get_sel()
         if datos:
@@ -320,10 +338,11 @@ def abrir_menu_admin(usuario, winlog):
             registrar(usuario, "Solicitud rechazada.","USERS")
             cargar_datos()
     
+    # Funcion que trae la vista de Logs desde su archivo
     def mostrar_gestion_logs():
         limpiar_contenedor()
         mostrar_logs(contenedor)
-
+    
     # Botones menú lateral
     btn_inicio = ctk.CTkButton(menu_lateral, text="Inicio",
                                fg_color=colors["BUTTON"], width=180,

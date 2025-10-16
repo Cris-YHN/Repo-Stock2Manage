@@ -8,15 +8,27 @@ def cargar_codigos_postales():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # Abrir Excel en modo solo lectura para menos consumo de memoria
     wb = load_workbook(XLSX_PATH, read_only=True, data_only=True)
     sheet = wb.active  # primera hoja
 
-    # Recorre el archivo desde la segunda fila (omite encabezados)
     for row in sheet.iter_rows(min_row=2, values_only=True):
         if not row or all(c is None for c in row):
             continue  # salta filas vacías
-        codigo, ciudad, provincia, pais = row[:4]  # en caso de columnas extras
+
+        # Obtener valores y asegurar longitud
+        valores = list(row) + [None] * (3 - len(row))
+        codigo, ciudad, provincia = valores[:3]
+        pais = "Argentina"
+
+        # 🔧 Normalizar código postal
+        if codigo is None or ciudad is None:
+            print(f"⚠️ Fila incompleta, se omite: {valores}")
+            continue
+
+        if isinstance(codigo, float):
+            codigo = str(int(codigo))
+        else:
+            codigo = str(codigo).strip()
 
         try:
             cursor.execute(

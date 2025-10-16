@@ -10,11 +10,13 @@ def create_table_usuarios():
             nombre TEXT NOT NULL,
             apellido TEXT NOT NULL,
             contrasenia TEXT NOT NULL,
-            email TEXT NOT NULL,
             puesto TEXT NOT NULL,
-            codigohash TEXT,
             activo INTEGER DEFAULT 0,
-            timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+            email TEXT NOT NULL,
+            codigohash TEXT,
+            intentos_fallidos INTEGER DEFAULT 0,
+            fecha_ultimo_intento TEXT
         )"""
     )
 
@@ -73,6 +75,7 @@ def create_table_materiales():
             stock_disponible INTEGER DEFAULT 0,
             id_proveedor INTEGER NOT NULL,
             activo INTEGER DEFAULT 1,
+            max_ingreso INTEGER DEFAULT 0,
             FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
         )"""
     )

@@ -4,8 +4,8 @@ from entities.ProveedorEntity import Proveedor
 def listar_proveedores():
     return ProveedorModel.obtener_todos()
 
-def Buscar_proveedor_por_id(id):
-    return ProveedorModel.obtener_por_ID(id)
+def Buscar_proveedor_por_nombre(name):
+    return ProveedorModel.obtener_por_nombre(name)
 
 def crear_proveedor(nombre, cp, calle, numero, telefono):
     proveedor = Proveedor(nombre_proveedor=nombre, codigo_postal=cp, calle=calle, numero=numero, telefono=telefono)

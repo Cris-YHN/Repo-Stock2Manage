@@ -1,6 +1,10 @@
 import sqlite3
 import bcrypt
+import secrets
+import smtplib
+from email.mime.text import MIMEText
 from entities.UsuarioEntity import Usuario
+from datetime import datetime, date
 
 DB_PATH = "database/s2m.db"
 
@@ -122,3 +126,93 @@ class UsuarioModel:
         rows = cursor.fetchall()
         conn.close()
         return [Usuario(*row) for row in rows]
+    
+    @staticmethod
+    def generar_codigo_hash(id_usuario):
+        codigo = secrets.token_hex(4).upper()  # Ejemplo: 'A1F3C9D4'
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE usuarios SET codigohash = ? WHERE id_usuario = ?", (codigo, id_usuario))
+        conn.commit()
+        conn.close()
+        return codigo
+
+    @staticmethod
+    def enviar_codigo_email(email, codigo):
+        remitente = "stock2manage.v1@gmail.com"  # 🔥 CAMBIAR por tu correo
+        password = "xcmv atgd qpyl nbfy"
+
+        msg = MIMEText(f"Tu código de recuperación de contraseña es: {codigo}")
+        msg["Subject"] = "Recuperación de contraseña"
+        msg["From"] = remitente
+        msg["To"] = email
+
+        try:
+            # Gmail usa SSL directo por puerto 465
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login(remitente, password)
+                server.send_message(msg)
+            print(f"✅ Correo enviado a {email}")
+        except smtplib.SMTPAuthenticationError:
+            print("❌ Error de autenticación: revisá el correo o la contraseña de aplicación.")
+            raise
+        except Exception as e:
+            print(f"❌ Error al enviar correo: {e}")
+            raise
+
+    @staticmethod
+    def actualizar_contrasenia(id_usuario, nueva_contrasenia):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE usuarios SET contrasenia = ?, codigohash = NULL WHERE id_usuario = ?", (nueva_contrasenia, id_usuario))
+        conn.commit()
+        conn.close()
+    
+    @staticmethod
+    def registrar_intento_fallido(id_usuario):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        hoy = date.today().isoformat()
+
+        # Obtener datos actuales
+        cursor.execute("SELECT intentos_fallidos, fecha_ultimo_intento FROM usuarios WHERE id_usuario = ?", (id_usuario,))
+        row = cursor.fetchone()
+
+        intentos = 0
+        fecha = None
+        if row:
+            intentos, fecha = row
+
+        # Si es un nuevo día, reiniciamos el contador
+        if fecha != hoy:
+            intentos = 0
+
+        intentos += 1
+
+        # Guardar intento actualizado
+        cursor.execute("""
+            UPDATE usuarios
+            SET intentos_fallidos = ?, fecha_ultimo_intento = ?
+            WHERE id_usuario = ?
+        """, (intentos, hoy, id_usuario))
+
+        # Si superó el límite, bloquear
+        if intentos >= 5:
+            cursor.execute("UPDATE usuarios SET activo = 0 WHERE id_usuario = ?", (id_usuario,))
+            print(f"🚫 Usuario {id_usuario} bloqueado por 5 intentos fallidos hoy")
+
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def resetear_intentos(id_usuario):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE usuarios 
+            SET intentos_fallidos = 0, fecha_ultimo_intento = NULL
+            WHERE id_usuario = ?
+        """, (id_usuario,))
+        conn.commit()
+        conn.close()

@@ -41,18 +41,19 @@ class RemitoModel:
         return [Remito(*row) for row in rows]
 
     @staticmethod
-    def obtener_por_ID(id_remito):
+    def obtener_remitos_por_fecha(patron_fecha):
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
+        # Usa LIKE para buscar por año, año-mes o año-mes-día
         cursor.execute("""
             SELECT r.id_remito, r.fecha_remito, r.id_proveedor, p.nombre_proveedor
             FROM remitos r
             LEFT JOIN proveedores p ON r.id_proveedor = p.id_proveedor
-            WHERE r.id_remito = ?
-        """, (id_remito,))
-        row = cursor.fetchone()
+            WHERE r.fecha_remito LIKE ?
+        """, (f"{patron_fecha}%",))
+        rows = cursor.fetchall()
         conn.close()
-        return Remito(*row) if row else None
+        return [Remito(*row) for row in rows] if rows else []
 
     @staticmethod
     def actualizar_proveedor(id_remito, id_proveedor):
