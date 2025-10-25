@@ -59,7 +59,7 @@ def create_table_proveedores():
             calle TEXT,
             numero TEXT,
             telefono TEXT,
-            FOREIGN KEY (codigo_postal) REFERENCES codigos_postales(codigo_postal)
+            FOREIGN KEY (codigo_postal) REFERENCES codigos_postales(codigo_postal) ON DELETE RESTRICT
         )"""
     )
     conn.commit()
@@ -76,7 +76,7 @@ def create_table_materiales():
             id_proveedor INTEGER NOT NULL,
             activo INTEGER DEFAULT 1,
             max_ingreso INTEGER DEFAULT 0,
-            FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
+            FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor) ON DELETE RESTRICT
         )"""
     )
     conn.commit()
@@ -90,7 +90,7 @@ def create_table_remitos():
             id_remito INTEGER PRIMARY KEY AUTOINCREMENT,
             fecha_remito TEXT NOT NULL,
             id_proveedor INTEGER NOT NULL,
-            FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
+            FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor) ON DELETE RESTRICT
         )"""
     )
     conn.commit()
@@ -105,8 +105,8 @@ def create_table_remito_detalles():
             id_material INTEGER,
             cantidad INTEGER NOT NULL,
             PRIMARY KEY (id_remito, id_material),
-            FOREIGN KEY (id_remito) REFERENCES remitos(id_remito),
-            FOREIGN KEY (id_material) REFERENCES materiales(id_material)
+            FOREIGN KEY (id_remito) REFERENCES remitos(id_remito) ON DELETE RESTRICT,
+            FOREIGN KEY (id_material) REFERENCES materiales(id_material) ON DELETE RESTRICT
         )"""
     )
     conn.commit()
@@ -134,8 +134,8 @@ def create_table_manufactura_detalles():
             id_material INTEGER,
             cantidad_necesaria INTEGER NOT NULL,
             PRIMARY KEY (id_manufactura, id_paso, id_material),
-            FOREIGN KEY (id_manufactura) REFERENCES manufactura(id_manufactura),
-            FOREIGN KEY (id_material) REFERENCES materiales(id_material)
+            FOREIGN KEY (id_manufactura) REFERENCES manufactura(id_manufactura) ON DELETE RESTRICT,
+            FOREIGN KEY (id_material) REFERENCES materiales(id_material) ON DELETE RESTRICT
         )"""
     )
     conn.commit()

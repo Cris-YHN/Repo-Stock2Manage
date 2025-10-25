@@ -218,3 +218,5 @@ class UsuarioModel:
         """, (id_usuario,))
         conn.commit()
         conn.close()
+    
+    

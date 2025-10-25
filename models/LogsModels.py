@@ -24,3 +24,17 @@ class LogsModel:
         rows = cursor.fetchall()
         conn.close()
         return [logs(*row) for row in rows]
+
+    @staticmethod
+    def obtener_por_nivel(nivel):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, usuario, accion, nivel, equipo, fecha
+            FROM logs
+            WHERE nivel = ?
+            ORDER BY fecha DESC
+        """, (nivel,))
+        rows = cursor.fetchall()
+        conn.close()
+        return [logs(*row) for row in rows]

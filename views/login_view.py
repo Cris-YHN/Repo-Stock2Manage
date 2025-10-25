@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from PIL import Image
 from tkinter import messagebox
-from controllers.UsuarioControllers import registrar_usuario, login_usuario, obtener_usuario_por_id
+from controllers.UsuarioControllers import registrar_usuario, login_usuario, verificar_codigo, cambiar_contrasenia
 from controllers.LogsController import registrar as registrolog
 from views.Menu_Admin_view import abrir_menu_admin
 from views.Menu_Operario_view import abrir_menu_operario
@@ -74,7 +74,6 @@ def ventana_login():
 
             # Si se devuelve un usuario válido
             if usuario:
-                # Si el usuario está inactivo, no permitir acceso
                 if usuario.intentos_fallidos >= 5:
                         messagebox.showerror("Cuenta bloqueada", "Tu cuenta fue bloqueada por 5 intentos fallidos. Contacta al administrador.")
                         registrolog(usuario, "Cuenta bloqueada por varios ingresos erroneos.", "LOGIN")
@@ -91,7 +90,7 @@ def ventana_login():
 
                 winlog.withdraw()  # Oculta ventana login
 
-                # Abrir menú según el rol
+                # Abrir menú según el puesto
                 if usuario.puesto == "admin":
                     abrir_menu_admin(usuario, winlog)
                 elif usuario.puesto == "operario":
@@ -101,7 +100,7 @@ def ventana_login():
                 else:
                     messagebox.showerror("Error", "Puesto no reconocido para este usuario.")
                     winlog.deiconify()
-            else: 
+            else: # si devuelve un None
                 messagebox.showerror("Error", "Credenciales incorrectas.")
 
         except ValueError:
@@ -153,7 +152,6 @@ def ventana_login():
                     winreg.destroy()
                 else:
                     messagebox.showerror("Error", "Todos los campos son obligatorios")
-
             except Exception as e:
                 messagebox.showerror("Error", f"Ocurrió un problema: {e}")
 
@@ -186,6 +184,8 @@ def ventana_login():
                     messagebox.showerror("Error", "Usuario no encontrado")
             except Exception as e:
                 messagebox.showerror("Error", str(e))
+            except ValueError:
+                messagebox.showerror("Error", "Ingrese un número válido")
 
         ctk.CTkButton(winrec, text="Enviar Código", fg_color=colors["BUTTON"],
                       text_color=colors["BUTTON_TXT"], command=enviar_codigo).pack(pady=10)
@@ -199,15 +199,17 @@ def ventana_login():
             entry_new.pack(pady=5)
 
             def cambiar():
-                from controllers.UsuarioControllers import verificar_codigo, cambiar_contrasenia
-                codigo = entry_code.get().strip().upper()
-                if verificar_codigo(usuario.id_usuario, codigo):
-                    resultado = cambiar_contrasenia(usuario.id_usuario, entry_new.get())
-                    messagebox.showinfo("Resultado", resultado)
-                    if "actualizada" in resultado.lower():
-                        winrec.destroy()
-                else:
-                    messagebox.showerror("Error", "Código incorrecto")
+                try:
+                    codigo = entry_code.get().strip().upper()
+                    if verificar_codigo(usuario.id_usuario, codigo):
+                        resultado = cambiar_contrasenia(usuario.id_usuario, entry_new.get())
+                        messagebox.showinfo("Resultado", resultado)
+                        if "actualizada" in resultado.lower():
+                            winrec.destroy()
+                    else:
+                        messagebox.showerror("Error", "Código incorrecto")
+                except Exception as e:
+                    messagebox.showerror("Error", str(e))
 
             ctk.CTkButton(winrec, text="Cambiar Contraseña", fg_color=colors["BUTTON"],
                           text_color=colors["BUTTON_TXT"], command=cambiar).pack(pady=15)

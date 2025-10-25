@@ -107,14 +107,17 @@ def gestion_crear_manufactura(contenedor, usuario):
         entry_nombre.pack(pady=5)
 
         def guardar():
-            nombre = entry_nombre.get().strip()
-            if not nombre:
-                messagebox.showerror("Error", "Debe ingresar un nombre")
-                return
-            crear_manufactura(nombre)
-            registrar(usuario, "Manufactura creada con exito.", "MANUF")
-            cargar_todos()
-            mini.destroy()
+            try:
+                nombre = entry_nombre.get().strip()
+                if not nombre:
+                    messagebox.showerror("Error", "Debe ingresar un nombre")
+                    return
+                crear_manufactura(nombre)
+                registrar(usuario, "Manufactura creada con exito.", "MANUF")
+                cargar_todos()
+                mini.destroy()
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
 
         ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=10)
     
@@ -162,11 +165,14 @@ def gestion_crear_manufactura(contenedor, usuario):
 
         def guardar():
             try:
-                modificar_manufactura(int(datos[0]), entry_nom.get())
+                name = entry_nom.get()
+                modificar_manufactura(int(datos[0]), name)
                 registrar(usuario, "Manufactura modificada.", "MANUF")
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
+            except ValueError:
+                messagebox.showerror("Error", "Ingrese un número válido")
         ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=10)
     
     # Funcion para la ventana para introducir 
@@ -272,6 +278,8 @@ def gestion_crear_manufactura(contenedor, usuario):
                     win.destroy()
                 except ValueError:
                     messagebox.showerror("Error", "Ingrese valores numéricos válidos.")
+                except ValueError:
+                    messagebox.showerror("Error", "Ingrese un número válido")
 
             # Botones en la ventana de agregar
             ctk.CTkButton(win, text="Agregar Material", fg_color=colors["BUTTON"],
@@ -319,6 +327,8 @@ def gestion_crear_manufactura(contenedor, usuario):
                     registrar(usuario, "Paso de manufactura modificado.", "MANUF")
                     cargar_pasos()
                     win.destroy()
+                except Exception as e:
+                    messagebox.showerror("Error", str(e))
                 except ValueError:
                     messagebox.showerror("Error", "Datos inválidos")
 

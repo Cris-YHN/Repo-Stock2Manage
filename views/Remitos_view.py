@@ -162,6 +162,8 @@ def gestion_remitos(contenedor, usuario):
 
             except Exception as e:
                 messagebox.showerror("Error", str(e))
+            except ValueError:
+                messagebox.showerror("Error", "Ingrese un número válido")
 
         ctk.CTkButton(frame_center, text="Buscar", fg_color=color["BUTTON"], command=go).pack(pady=15)
     
@@ -180,11 +182,14 @@ def gestion_remitos(contenedor, usuario):
 
         def guardar():
             try:
-                modificar_proveedor(int(datos[0]), int(e_prov.get()))
+                prov = int(e_prov.get())
+                modificar_proveedor(int(datos[0]), prov)
                 registrar(usuario, "Modificacion de proveedor de Remito.", "REMITO")
                 cargar_todos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
+            except ValueError:
+                messagebox.showerror("Error", "Ingrese un número válido")
         ctk.CTkButton(frame_center, text="Guardar", fg_color=color["BUTTON"], command=guardar).pack(pady=10)
 
     # Funcion para generar PDF de Remito
@@ -197,7 +202,9 @@ def gestion_remitos(contenedor, usuario):
             messagebox.showinfo("Sin datos", "No hay detalles")
             return
 
-        fname = f"remito_{idr}.pdf"
+        output_dir = os.path.join("reports", "remitos")
+        os.makedirs(output_dir, exist_ok=True)
+        fname = os.path.join(output_dir, f"remito_{idr}.pdf")
         doc = SimpleDocTemplate(fname, pagesize=A4)
         styles = getSampleStyleSheet()
         elems = [Paragraph(f"Detalle Remito #{idr}", styles["Title"]), Spacer(1, 12)]

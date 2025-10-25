@@ -14,3 +14,7 @@ def registrar(usuario, accion, nivel):
 
 def listar_todos():
     return LogsModel.obtener_logs()
+
+def listar_por_nivel(nivel):
+    return LogsModel.obtener_por_nivel(nivel)
+

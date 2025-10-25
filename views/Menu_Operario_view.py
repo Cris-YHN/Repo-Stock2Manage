@@ -95,6 +95,8 @@ def abrir_menu_operario(usuario, winlog):
             nonlocal pasos
             try:
                 id_manu = int(entry_idmanu.get())
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
             except ValueError:
                 messagebox.showerror("Error", "Debe ingresar un ID numérico")
                 return

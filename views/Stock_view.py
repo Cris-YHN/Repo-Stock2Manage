@@ -5,7 +5,7 @@ from controllers.LogsController import registrar
 from controllers.MaterialControllers import (
     listar_materiales, listar_materiales_activos, listar_materiales_inactivos, listar_materiales_escasos,
     buscar_nombre, crear_material, modificar_material,
-    baja_material, alta_material, Carga_Materiales_delRemito
+    baja_material, alta_material, Carga_Materiales_delRemito, verificar_material_proveedor
 )
 from controllers.RemitosControllers import crear_remito
 from controllers.ProveedorControllers import listar_proveedores
@@ -182,8 +182,8 @@ def gestion_stock(contenedor, usuario):
                 prov   = int(e_prov.get().strip())
             except Exception as e:
                 messagebox.showerror("Error", str(e)); return
-            except:
-                messagebox.showerror("Error", "Datos inválidos"); return
+            except ValueError:
+                messagebox.showerror("Error", "Ingrese un número válido")
             if not any(p.id_proveedor == prov for p in listar_proveedores()):
                 messagebox.showerror("Error", "Proveedor inexistente"); return
             crear_material(nombre, prov)
@@ -299,18 +299,25 @@ def gestion_stock(contenedor, usuario):
                     messagebox.showerror("Error", "Debe verificar el proveedor antes de continuar.")
                     return
                 detalles = []
-                for e_id,e_qty in materiales:
-                    detalles.append(RemitoDetalle(
-                        id_material=int(e_id.get()),
-                        cantidad=int(e_qty.get())
-                    ))
-                    Carga_Materiales_delRemito(int(e_id.get()), int(e_qty.get()))
+                for e_id, e_qty in materiales:
+                    id_mat = int(e_id.get())
+                    cant = int(e_qty.get())
+                    if not verificar_material_proveedor(id_mat, idp):
+                        messagebox.showerror(
+                            "Error de Proveedor",
+                            f"El material con ID {id_mat} no pertenece al proveedor {idp}."
+                        )
+                        return
+                    detalles.append(RemitoDetalle(id_material=id_mat, cantidad=cant))
+                    Carga_Materiales_delRemito(id_mat, cant)
                 crear_remito(datetime.date.today().strftime("%Y-%m-%d"), idp, detalles)
                 messagebox.showinfo("Éxito","Remito cargado")
                 registrar(usuario, "Remito creado con exito.", "REMITO")
                 cargar_datos(); mini.destroy()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
+            except ValueError:
+                messagebox.showerror("Error", "Ingrese un número válido")
 
         ctk.CTkButton(mini, text="Agregar Material", fg_color=colors["BUTTON"], command=add_row).pack(pady=5)
         ctk.CTkButton(mini, text="Guardar Remito", fg_color=colors["BUTTON"], command=guardar).pack(pady=5)

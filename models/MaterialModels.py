@@ -156,3 +156,15 @@ class MaterialModel:
         """, (cantidad, id_material))
         conn.commit()
         conn.close()
+
+    @staticmethod
+    def pertenece_a_proveedor(id_material, id_proveedor):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 1 FROM materiales
+            WHERE id_material = ? AND id_proveedor = ?
+        """, (id_material, id_proveedor))
+        result = cursor.fetchone() is not None
+        conn.close()
+        return result

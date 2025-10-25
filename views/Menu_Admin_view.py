@@ -258,11 +258,18 @@ def abrir_menu_admin(usuario, winlog):
 
         # Funcion para guardar la modificacion
         def guardar():
-            modificar_usuario(datos[0], entry_nombre.get(), entry_apellido.get(),entry_email.get(), combo_puesto.get())
-            messagebox.showinfo("Éxito","Usuario actualizado")
-            registrar(usuario, "Modificacion a un Usuario.","USERS")
-            mini.destroy()
-            cargar_datos()
+            try:
+                name = entry_nombre.get()
+                surname = entry_apellido.get()
+                correo = entry_email.get()
+                rol = combo_puesto.get()
+                modificar_usuario(datos[0], name, surname, correo, rol)
+                messagebox.showinfo("Éxito","Usuario actualizado")
+                registrar(usuario, "Modificacion a un Usuario.","USERS")
+                mini.destroy()
+                cargar_datos()
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
 
         # Botones de mini ventana
         ctk.CTkButton(frame_center, text="Guardar", fg_color=colors["BUTTON"], command=guardar).pack(pady=20)

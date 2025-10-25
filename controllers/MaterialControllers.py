@@ -37,3 +37,6 @@ def verificar_existencia(idmat):
 
 def uso_material(cantidad, idmat):
     MaterialModel.descontar_material(cantidad, idmat)
+
+def verificar_material_proveedor(id_material, id_proveedor):
+    return MaterialModel.pertenece_a_proveedor(id_material, id_proveedor)
