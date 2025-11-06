@@ -7,7 +7,7 @@ from controllers.UsuarioControllers import (
     listar_usuarios, listar_activos, listar_inactivos, listar_solicitudes,
     modificar_usuario, baja_usuario, alta_usuario,
     aprobar_usuario, rechazar_usuario, buscar_por_apellido)
-from views.Logs_view import mostrar_logs
+from views.Logs_view import mostrar_logs_admin
 
 # Funcion para deshabilitar botones
 def set_button_state(btn, enabled: bool):
@@ -348,7 +348,7 @@ def abrir_menu_admin(usuario, winlog):
     # Funcion que trae la vista de Logs desde su archivo
     def mostrar_gestion_logs():
         limpiar_contenedor()
-        mostrar_logs(contenedor)
+        mostrar_logs_admin(contenedor)
     
     # Botones menú lateral
     btn_inicio = ctk.CTkButton(menu_lateral, text="Inicio",

@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, Listbox
 from assets.Themes import themes
 from controllers.LogsController import registrar 
 from controllers.MaterialControllers import (
@@ -87,10 +87,17 @@ def gestion_stock(contenedor, usuario):
     # Inicializacion de datos y barra de scroll en Treeview
     columnas = ("ID","Nombre","Stock","ID Proveedor","Proveedor","Max Ingreso","Estado")
     dgv = ttk.Treeview(frame_tree, columns=columnas, show="headings", yscrollcommand=scrollbar_y.set)
+
     for col in columnas:
-        dgv.heading(col, text=col, command=lambda c=col: ordenar_por_columna(c))
-        dgv.column(col, anchor="center", width=150)
-    dgv.pack(fill="both", expand=True, padx=5, pady=5)
+        # Ocultamos visualmente las columnas ID e ID Proveedor
+        if col in ("ID", "ID Proveedor"):
+            dgv.heading(col, text="")  # Sin título visible
+            dgv.column(col, anchor="center", width=0, stretch=False)  # Ancho cero
+        else:
+            dgv.heading(col, text=col, command=lambda c=col: ordenar_por_columna(c))
+            dgv.column(col, anchor="center", width=150)
+
+    dgv.pack(fill="both", expand=True, padx=2, pady=2)
 
     scrollbar_y.configure(command=dgv.yview)
 
@@ -241,7 +248,7 @@ def gestion_stock(contenedor, usuario):
         mini.title("Cargar Remito"); mini.transient(main); mini.grab_set()
         mini.geometry("500x500")
         materiales = []
-        proveedor_valido = {"ok": False}
+        proveedor_valido = {"id": None, "ok": False}
 
         frame_prov = ctk.CTkFrame(mini, fg_color="transparent")
         frame_prov.pack(pady=10)
@@ -250,77 +257,149 @@ def gestion_stock(contenedor, usuario):
         e_prov = ctk.CTkEntry(frame_prov, width=150)
         e_prov.grid(row=0, column=1, padx=5, pady=5)
 
-        def verificar_proveedor():
-            try:
-                idp = int(e_prov.get().strip())
-                proveedores = listar_proveedores()
-                prov = next((p for p in proveedores if p.id_proveedor == idp), None)
-                if prov:
-                    messagebox.showinfo("Proveedor encontrado", f"✅ {prov.nombre_proveedor} (ID: {prov.id_proveedor})")
-                    proveedor_valido["ok"] = True
-                else:
-                    messagebox.showerror("Error", "Proveedor inexistente")
-                    proveedor_valido["ok"] = False
-            except ValueError:
-                messagebox.showerror("Error", "Ingrese un número de proveedor válido")
-                proveedor_valido["ok"] = False
+        import tkinter as tk
+        listbox_sug = tk.Listbox(
+        frame_prov,
+        height=4,
+        width=45,
+        bg=colors["FRAME"],
+        fg=colors["TEXT"],
+        highlightbackground=colors["TOP"],
+        highlightcolor=colors["TOP"],
+        selectbackground=colors["TOP"],
+        selectforeground=colors["BUTTON_TXT"],
+        relief="flat",
+        borderwidth=2,
+        font=("Arial", 13)
+        )
+        listbox_sug.grid(row=1, column=1, padx=5, pady=2)
 
-        ctk.CTkButton(frame_prov, text="Verificar", fg_color=colors["BUTTON"],
-                    text_color=colors["BUTTON_TXT"], width=100,
-                    command=verificar_proveedor).grid(row=0, column=2, padx=5, pady=5)
-        
-        frame = ctk.CTkFrame(mini)
-        frame.pack(pady=10)
+        def actualizar_sugerencias(event=None):
+            texto = e_prov.get().lower()
+            listbox_sug.delete(0, "end")
+            proveedor_valido["ok"] = False
 
-        def add_row():
-            # si ya hay filas, exigir que la última no esté vacía
-            if materiales:
-                e_id_last, e_qty_last = materiales[-1]
-                if not e_id_last.get().strip() or not e_qty_last.get().strip():
-                    messagebox.showwarning("Atención",
-                                        "Complete el material anterior antes de agregar otro.")
-                    return
-            row = ctk.CTkFrame(frame, fg_color=colors["FRAME"], corner_radius=10)
-            row.pack(pady=8, padx=15, fill="x")
-            e_id = ctk.CTkEntry(row, width=100, placeholder_text="ID Material")
-            e_id.grid(row=0, column=0, padx=10, pady=5)
+            if not texto:
+                return
 
-            e_qty = ctk.CTkEntry(row, width=100, placeholder_text="Cantidad")
-            e_qty.grid(row=0, column=1, padx=10, pady=5)
-            ctk.CTkButton(row, text="❌", width=20, fg_color="#ff4d4d",
-                          command=lambda r=row: (materiales.remove((e_id,e_qty)), r.destroy())
-            ).grid(row=0, column=2, padx=5)
-            materiales.append((e_id,e_qty))
+            proveedores = listar_proveedores()
+            for prov in proveedores:
+                if texto in prov.nombre_proveedor.lower():
+                    listbox_sug.insert("end", f"{prov.nombre_proveedor} | ID:{prov.id_proveedor}")
+
+        def seleccionar_proveedor(event=None):
+            if not listbox_sug.curselection():
+                return
+
+            sel = listbox_sug.get(listbox_sug.curselection())
+            nombre, idp = sel.split("| ID:")
+
+            # Setear nombre definitivo
+            e_prov.delete(0, "end")
+            e_prov.insert(0, nombre.strip())
+
+            proveedor_valido["id"] = int(idp.strip())
+            proveedor_valido["ok"] = True
+
+            # Limpiar y ocultar las sugerencias
+            listbox_sug.delete(0, "end")
+            listbox_sug.grid_remove()
+
+            # Bloquear entrada para que no se pueda modificar
+            e_prov.configure(state="disabled")
+
+
+        e_prov.bind("<KeyRelease>", actualizar_sugerencias)
+        listbox_sug.bind("<<ListboxSelect>>", seleccionar_proveedor)
+
+        frame_mats_container = ctk.CTkFrame(mini)
+        frame_mats_container.pack(pady=10, fill="both", expand=True)
+
+        canvas = ctk.CTkCanvas(
+            frame_mats_container,
+            bg=colors["BG"],
+            highlightthickness=0
+        )
+        canvas.pack(side="left", fill="both", expand=True)
+
+        scrollbar_mats = ctk.CTkScrollbar(
+            frame_mats_container, orientation="vertical",
+            command=canvas.yview
+        )
+        scrollbar_mats.pack(side="right", fill="y")
+
+        canvas.configure(yscrollcommand=scrollbar_mats.set)
+
+        # Contenido scrolleable
+        frame_mats = ctk.CTkFrame(canvas, fg_color="transparent")
+        frame_mats.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        canvas.create_window((0, 0), window=frame_mats, anchor="nw")
+
+        def cargar_materiales_del_proveedor():
+            if not proveedor_valido["ok"]:
+                messagebox.showwarning("Atención", "Seleccione un proveedor válido de la lista.")
+                return
+            
+            idp = proveedor_valido["id"]
+
+            for r in materiales:
+                try:
+                    r[1].master.destroy()
+                except:
+                    pass
+            materiales.clear()
+
+            mats = listar_materiales_activos()
+            mats = [m for m in mats if m.id_proveedor == idp]
+
+            if not mats:
+                messagebox.showinfo("Sin materiales", "El proveedor no tiene materiales activos.")
+                return
+
+            for m in mats:
+                row = ctk.CTkFrame(frame_mats, fg_color=colors["FRAME"], corner_radius=10)
+                row.pack(pady=8, padx=50, fill="x")
+
+                lbl = ctk.CTkLabel(row, text=m.nombre)
+                lbl.grid(row=0, column=0, padx=10)
+
+                e_qty = ctk.CTkEntry(row, width=90, placeholder_text="Cantidad")
+                e_qty.grid(row=0, column=1, padx=10)
+                
+                materiales.append((m.id_material, e_qty))
+
+        ctk.CTkButton(frame_prov, text="Cargar Materiales del Proveedor", fg_color=colors["BUTTON"],
+                    command=cargar_materiales_del_proveedor).grid(row=0, column=2, padx=5, pady=5)
 
         def guardar():
+            if not proveedor_valido["ok"]:
+                messagebox.showerror("Error", "Debe seleccionar un proveedor válido.")
+                return
+
+            idp = proveedor_valido["id"]
+            detalles = []
+
             try:
-                idp = int(e_prov.get())
-                if not proveedor_valido["ok"]:
-                    messagebox.showerror("Error", "Debe verificar el proveedor antes de continuar.")
-                    return
-                detalles = []
-                for e_id, e_qty in materiales:
-                    id_mat = int(e_id.get())
+                for id_mat, e_qty in materiales:
                     cant = int(e_qty.get())
-                    if not verificar_material_proveedor(id_mat, idp):
-                        messagebox.showerror(
-                            "Error de Proveedor",
-                            f"El material con ID {id_mat} no pertenece al proveedor {idp}."
-                        )
-                        return
+                    if cant <= 0:
+                        raise ValueError
                     detalles.append(RemitoDetalle(id_material=id_mat, cantidad=cant))
                     Carga_Materiales_delRemito(id_mat, cant)
-                crear_remito(datetime.date.today().strftime("%Y-%m-%d"), idp, detalles)
-                messagebox.showinfo("Éxito","Remito cargado")
-                registrar(usuario, "Remito creado con exito.", "REMITO")
-                cargar_datos(); mini.destroy()
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
-            except ValueError:
-                messagebox.showerror("Error", "Ingrese un número válido")
 
-        ctk.CTkButton(mini, text="Agregar Material", fg_color=colors["BUTTON"], command=add_row).pack(pady=5)
-        ctk.CTkButton(mini, text="Guardar Remito", fg_color=colors["BUTTON"], command=guardar).pack(pady=5)
+                crear_remito(datetime.date.today().strftime("%Y-%m-%d"), idp, detalles)
+                registrar(usuario, "Remito creado con éxito.", "REMITO")
+                cargar_datos()
+                mini.destroy()
+
+                messagebox.showinfo("Éxito", "Remito cargado correctamente.")
+            except ValueError:
+                messagebox.showerror("Error", "Ingrese cantidades válidas en todos los materiales.")
+
+        ctk.CTkButton(mini, text="Guardar Remito", fg_color=colors["BUTTON"], command=guardar).pack(pady=10)
     
     # Frame de botones
     frame_botones = ctk.CTkFrame(main, fg_color=colors["FRAME"])

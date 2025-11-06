@@ -5,6 +5,8 @@ from views.Stock_view import gestion_stock
 from views.Proveedor_view import gestion_proveedores
 from views.Remitos_view import gestion_remitos
 from views.Crear_manufactura_view import gestion_crear_manufactura
+from views.Logs_view import mostrar_logs
+
 
 # Funcion de Ventana de menu Supervisor
 def abrir_menu_supervisor(usuario, winlog):
@@ -83,6 +85,10 @@ def abrir_menu_supervisor(usuario, winlog):
         limpiar_contenedor()
         gestion_crear_manufactura(contenedor, usuario)
     
+    def mostrar_gestion_logs():
+        limpiar_contenedor()
+        mostrar_logs(contenedor)
+    
     # Botones menú lateral
     btn_inicio = ctk.CTkButton(menu_lateral, text="Inicio",
                                fg_color=colors["BUTTON"], width=180,
@@ -108,6 +114,11 @@ def abrir_menu_supervisor(usuario, winlog):
                                 fg_color=colors["BUTTON"], width=180, command=mostrar_gestion_manufactura
                                 )
     btn_manufactura.pack(pady=5)
+
+    btn_logs = ctk.CTkButton(menu_lateral, text="Ver Logs",
+                            fg_color=colors["BUTTON"], width=180,
+                            command=mostrar_gestion_logs)
+    btn_logs.pack(pady=5)
 
     btn_salir = ctk.CTkButton(menu_lateral, text="Salir",
                                fg_color="#ff4d4d", width=180,

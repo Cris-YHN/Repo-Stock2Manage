@@ -7,6 +7,7 @@ from views.Menu_Admin_view import abrir_menu_admin
 from views.Menu_Operario_view import abrir_menu_operario
 from views.Menu_Supervisor_view import abrir_menu_supervisor
 from assets.Themes import themes
+import re
 
 def ventana_login():
     themes.init_theme()                    # Detecta el sistema
@@ -116,8 +117,21 @@ def ventana_login():
         winreg.transient(winlog)
         winreg.grab_set()
         winreg.title("Registro de Usuario")
-        winreg.geometry("400x400")
+        winreg.geometry("400x500")
         winreg.configure(fg_color=colors["BG"])
+
+        def validar_contrasenia(passwd):
+                if len(passwd) < 8:
+                    return False
+                if not re.search(r"[A-Z]", passwd):  # Mayúscula
+                    return False
+                if not re.search(r"[a-z]", passwd):  # Minúscula
+                    return False
+                if not re.search(r"\d", passwd):     # Número
+                    return False
+                if not re.search(r"[!@#$%^&*(),.?\":{}|<>]-_+", passwd):  # Especial
+                    return False
+                return True
 
         # Entrada de Datos
         ctk.CTkLabel(winreg, text="Nombre", text_color=colors["TEXT"]).pack(pady=5)
@@ -126,24 +140,62 @@ def ventana_login():
         ctk.CTkLabel(winreg, text="Apellido", text_color=colors["TEXT"]).pack(pady=5)
         entry_apellido = ctk.CTkEntry(winreg, width=250); entry_apellido.pack(pady=5)
 
-        ctk.CTkLabel(winreg, text="Contraseña", text_color=colors["TEXT"]).pack(pady=5)
-        entry_pass_reg = ctk.CTkEntry(winreg, show="*", width=250); entry_pass_reg.pack(pady=5)
-
-        ctk.CTkLabel(winreg, text="Email", text_color=colors["TEXT"]).pack(pady=5)
-        entry_email = ctk.CTkEntry(winreg, width=250); entry_email.pack(pady=5)
-
         ctk.CTkLabel(winreg, text="Puesto", text_color=colors["TEXT"]).pack(pady=5)
         combo_puesto = ctk.CTkComboBox(winreg, values=["admin", "operario", "supervisor"], width=250)
         combo_puesto.set("operario")
         combo_puesto.pack(pady=5)
 
+        ctk.CTkLabel(winreg, text="Email", text_color=colors["TEXT"]).pack(pady=5)
+        entry_email = ctk.CTkEntry(winreg, width=250); entry_email.pack(pady=5)
+
+        ctk.CTkLabel(winreg, text="Contraseña", text_color=colors["TEXT"]).pack(pady=5)
+
+        pass_frame = ctk.CTkFrame(winreg, fg_color="transparent")
+        pass_frame.pack(pady=5)
+
+        # Entry igual que los demás (mismo ancho)
+        entry_pass_reg = ctk.CTkEntry(pass_frame, show="*", width=250)
+        entry_pass_reg.pack(side="left", padx=(0, 5))
+
+        # Botón info (mismo estilo visual que los otros)
+        def mostrar_info():
+            messagebox.showinfo(
+                "Requisitos de contraseña",
+                "La contraseña debe contener:\n"
+                "• Al menos 1 letra mayúscula\n"
+                "• Al menos 1 letra minúscula\n"
+                "• Al menos 1 número\n"
+                "• Al menos 1 carácter especial (!@#$%^&*...)\n"
+                "• Mínimo 8 caracteres"
+            )
+
+        info_btn = ctk.CTkButton(
+            pass_frame,
+            text="ℹ️",
+            width=35,
+            fg_color=colors["FRAME"],      # color neutro
+            hover_color=colors["BUTTON"],  # resalta al pasar el mouse
+            text_color=colors["TEXT"],
+            corner_radius=8,
+            command=mostrar_info
+        )
+        info_btn.pack(side="left")
+
         def registrar():
             try:
                 nombre = entry_nombre.get().strip()
                 apellido = entry_apellido.get().strip()
-                passwd = entry_pass_reg.get()
-                email = entry_email.get()
                 puesto = combo_puesto.get()
+                email = entry_email.get()
+                passwd = entry_pass_reg.get()
+
+                if not validar_contrasenia(passwd):
+                    messagebox.showwarning(
+                        "Contraseña inválida",
+                        "Debe contener al menos:\n"
+                        "- 1 mayúscula\n- 1 minúscula\n- 1 número\n- 1 carácter especial\n- 8 caracteres mínimos"
+                    )
+                    return
 
                 if nombre and apellido and passwd:
                     usuario = registrar_usuario(nombre, apellido, passwd, email, puesto)

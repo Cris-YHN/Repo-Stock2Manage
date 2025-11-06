@@ -18,3 +18,8 @@ def listar_todos():
 def listar_por_nivel(nivel):
     return LogsModel.obtener_por_nivel(nivel)
 
+def listar_login_y_registro():
+    todos = LogsModel.obtener_logs()
+    return [l for l in todos if l.nivel.upper() in ("LOGIN", "REGISTRO")]
+
+
