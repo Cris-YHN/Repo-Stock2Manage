@@ -5,11 +5,11 @@ import socket
 def registrar(usuario, accion, nivel):
     if not isinstance(usuario, str):
         try:
-            usuario = usuario.nombre  # o usuario.username según tu entidad
+            user = usuario.nombre + " " + usuario.apellido  # o usuario.username según tu entidad
         except AttributeError:
-            usuario = str(usuario)
+            user = str(usuario)
     equipo = socket.gethostname()
-    log = logs(usuario=usuario, accion=accion, nivel=nivel, equipo=equipo)
+    log = logs(usuario=user, accion=accion, nivel=nivel, equipo=equipo)
     LogsModel.insertar_log(log)
 
 def listar_todos():
